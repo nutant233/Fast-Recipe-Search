@@ -1,15 +1,15 @@
 package fast.fastrecipesearch;
 
 import com.google.gson.JsonElement;
-import net.minecraft.recipe.Recipe;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.input.RecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.profiler.Profiler;
-import net.minecraft.world.World;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,39 +18,39 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RecipeManager extends net.minecraft.recipe.RecipeManager {
+public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManager {
 
     private final Map<RecipeType<?>, RecipeDB<?, ?>> cachedDBMap = new ConcurrentHashMap<>();
 
-    public RecipeManager(RegistryWrapper.WrapperLookup registries) {
+    public RecipeManager(HolderLookup.Provider registries) {
         super(registries);
     }
 
-    public <C extends RecipeInput, T extends Recipe<C>> Optional<RecipeEntry<T>> super_getFirstMatch(RecipeType<T> type, C inv, World world) {
-        return super.getFirstMatch(type, inv, world, (RecipeEntry<T>) null);
+    public <C extends RecipeInput, T extends Recipe<C>> Optional<RecipeHolder<T>> super_getFirstMatch(RecipeType<T> type, C inv, Level world) {
+        return super.getRecipeFor(type, inv, world, (RecipeHolder<T>) null);
     }
 
     @Override
-    protected void apply(Map<Identifier, JsonElement> map, ResourceManager resourceManager, Profiler profiler) {
-        super.apply(map, resourceManager, profiler);
+    protected void apply(Map<ResourceLocation, JsonElement> p_44037_, ResourceManager p_44038_, ProfilerFiller p_44039_) {
+        super.apply(p_44037_, p_44038_, p_44039_);
         cachedDBMap.clear();
     }
 
     @Override
-    public <C extends RecipeInput, T extends Recipe<C>> @NotNull Optional<RecipeEntry<T>> getFirstMatch(RecipeType<T> type, C input, World world, @Nullable RecipeEntry<T> lastRecipe) {
+    public <C extends RecipeInput, T extends Recipe<C>> @NotNull Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable RecipeHolder<T> lastRecipe) {
         if (lastRecipe != null && lastRecipe.value().matches(input, world)) return Optional.of(lastRecipe);
         var cachedRecipeList = getDB(type);
         return cachedRecipeList.get(input, world);
     }
 
     @Override
-    public <C extends RecipeInput, T extends Recipe<C>> @NotNull List<RecipeEntry<T>> getAllMatches(RecipeType<T> type, C input, World world) {
+    public <C extends RecipeInput, T extends Recipe<C>> @NotNull List<RecipeHolder<T>> getRecipesFor(RecipeType<T> type, C input, Level world) {
         var cachedRecipeList = getDB(type);
         return cachedRecipeList.getAll(input, world);
     }
 
     @SuppressWarnings("unchecked")
     private <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> getDB(RecipeType<T> type) {
-        return (RecipeDB<C, T>) cachedDBMap.computeIfAbsent(type, k -> RecipeDB.create(type, getAllOfType(type)));
+        return (RecipeDB<C, T>) cachedDBMap.computeIfAbsent(type, k -> RecipeDB.create(type, byType(type)));
     }
 }

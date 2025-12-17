@@ -1,71 +1,77 @@
 plugins {
-    id 'fabric-loom' version '1.14-SNAPSHOT'
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
     id 'maven-publish'
+    id 'net.neoforged.moddev' version '1.0.15'
 }
 
-version = project.mod_version
-group = project.maven_group
+version = mod_version
+group = mod_group_id
+
+repositories {
+    mavenLocal()
+}
 
 base {
-    archivesName = project.archives_base_name
+    archivesName = mod_id
 }
 
-loom {
-    accessWidenerPath = file("src/main/resources/fastrecipesearch.accesswidener")
-    splitEnvironmentSourceSets()
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+    version = project.neoforge_version
 
     mods {
-        "fastrecipesearch" {
+        extendedae {
             sourceSet sourceSets.main
         }
     }
+
+    runs {
+        client {
+            client()
+        }
+    }
+
 }
 
-
 repositories {
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/"
+    }
+    maven {
+        name 'cursemaven'
+        url = "https://www.cursemaven.com"
+    }
+    maven {
+        name = "Modmaven"
+        url = uri("https://modmaven.dev/")
+    }
+    mavenCentral()
     flatDir {
         dir "libs"
     }
 }
 
 dependencies {
-    include(implementation("dev:RecipeSearch:1.0"))
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
+    jarJar(implementation("dev:RecipeSearch:1.0"))
+    runtimeOnly "dev.emi:emi-neoforge:1.1.10+1.21"
+    runtimeOnly "curse.maven:jade-324717:5427817"
 }
 
-processResources {
-    inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
-    filteringCharset "UTF-8"
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
+            neo_version         : neoforge_version, neo_version_range: neoforge_version_range,
+            loader_version_range: loader_version_range,
+            mod_id              : mod_id, mod_name: mod_name, mod_version: mod_version,
+            mod_authors         : mod_authors,
+    ]
+    inputs.properties replaceProperties
 
-    filesMatching("fabric.mod.json") {
-        expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
-    }
-}
-
-def targetJavaVersion = 21
-tasks.withType(JavaCompile).configureEach {
-    it.options.encoding = "UTF-8"
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        it.options.release.set(targetJavaVersion)
-    }
-}
-
-java {
-    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-}
-
-jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
     }
 }

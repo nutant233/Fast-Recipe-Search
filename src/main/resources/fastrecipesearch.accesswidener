@@ -1,7 +1,0 @@
-accessWidener v1 named
-accessible class net/minecraft/server/DataPackContents$ConfigurableWrapperLookup
-accessible method net/minecraft/recipe/RecipeManager getAllOfType (Lnet/minecraft/recipe/RecipeType;)Ljava/util/Collection;
-accessible field net/minecraft/recipe/Ingredient entries [Lnet/minecraft/recipe/Ingredient$Entry;
-accessible class net/minecraft/recipe/Ingredient$Entry
-accessible class net/minecraft/recipe/Ingredient$StackEntry
-accessible class net/minecraft/recipe/Ingredient$TagEntry
