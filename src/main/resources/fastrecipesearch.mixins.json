@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "fast.fastrecipesearch.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "RecipeEntryMixin",
+    "ServerResourcesMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
