@@ -1,29 +1,50 @@
-ATM 10 Test
+## ATM 10 Test
+
 [18Dec2025 12:55:04.510] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 135018.2 ns to find the recipe for torch
+
 [18Dec2025 12:55:18.528] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.4016372E7 ns to find the recipe for torch
+
 [18Dec2025 12:55:18.551] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 22548.8 ns to find the recipe for workbench
+
 [18Dec2025 12:55:19.809] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1257699.5 ns to find the recipe for workbench
+
 [18Dec2025 12:55:19.855] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 46480.9 ns to find the recipe for chest
+
 [18Dec2025 12:55:20.145] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 290051.72 ns to find the recipe for chest
+
 [18Dec2025 12:55:20.154] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 8439.9 ns to find the recipe for furnace
+
 [18Dec2025 12:55:20.476] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 321852.9 ns to find the recipe for furnace
+
 [18Dec2025 12:55:20.617] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 140890.3 ns to find the recipe for bed
+
 [18Dec2025 12:55:27.591] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 6972892.0 ns to find the recipe for bed
+
 [18Dec2025 12:55:27.621] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 29388.1 ns to find the recipe for golden apple
+
 [18Dec2025 12:55:30.810] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 3187964.5 ns to find the recipe for golden apple
+
 [18Dec2025 12:55:30.950] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 139620.98 ns to find the recipe for arrow
+
 [18Dec2025 12:55:38.518] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 7566936.5 ns to find the recipe for arrow
+
 [18Dec2025 12:55:38.926] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 408603.4 ns to find the recipe for painting
+
 [18Dec2025 12:55:48.666] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 9739167.0 ns to find the recipe for painting
+
 [18Dec2025 12:55:48.709] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 42464.9 ns to find the recipe for bookshelf
+
 [18Dec2025 12:56:01.420] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.2710804E7 ns to find the recipe for bookshelf
+
 [18Dec2025 12:56:01.547] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 126764.8 ns to find the recipe for enchanting table
+
 [18Dec2025 12:56:20.741] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.9193496E7 ns to find the recipe for enchanting table
+
 [18Dec2025 12:56:20.912] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 171027.6 ns to find the recipe for failed
 
 <img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/5f08efb8-7194-4d04-b225-05092dc6f0f3" />
 
-Test code:
+## Test code:
 package fast.fastrecipesearch;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
