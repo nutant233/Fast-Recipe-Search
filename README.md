@@ -45,21 +45,7 @@
 <img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/5f08efb8-7194-4d04-b225-05092dc6f0f3" />
 
 ## Test code:
-package fast.fastrecipesearch;
-
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.recipe.input.CraftingRecipeInput;
-import net.minecraft.recipe.input.SingleStackRecipeInput;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.World;
-
-import static com.mojang.text2speech.Narrator.LOGGER;
+### Fabric:
 
 public class Test {
 
@@ -262,5 +248,176 @@ public class Test {
         }
         LOGGER.info("[Furnace Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
     }
+
+### Neoforge:
+
+public class Test {
+
+    static {
+        NeoForge.EVENT_BUS.addListener(ServerStartedEvent.class, e -> test(e.getServer()));
+    }
+
+    private static class TestHandler extends AbstractContainerMenu {
+
+        protected TestHandler() {
+            super(null, -1);
+        }
+
+
+        @Override
+        public net.minecraft.world.item.ItemStack quickMoveStack(Player p_38941_, int p_38942_) {
+            return net.minecraft.world.item.ItemStack.EMPTY;
+        }
+
+        @Override
+        public boolean stillValid(Player p_38874_) {
+            return true;
+        }
+    }
+
+    private static class CraftingInventory extends TransientCraftingContainer {
+
+        public CraftingInventory(AbstractContainerMenu p_287684_, int p_287629_, int p_287593_) {
+            super(p_287684_, p_287629_, p_287593_);
+        }
+
+        public void setStack(int p_38941_, net.minecraft.world.item.ItemStack p_38942_) {
+            this.setItem(p_38941_, p_38942_);
+        }
+    }
+
+    public static void test(MinecraftServer server) {
+        if (server == null) return;
+        LOGGER.info("Initiating Tests...");
+        RecipeManager mgr = (RecipeManager) server.getRecipeManager();
+        var world = server.getLevel(Level.OVERWORLD);
+        while (true) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+            CraftingInventory inv1 = new CraftingInventory(new TestHandler(), 2, 2);
+            inv1.setStack(0, new ItemStack(Items.STICK));
+            inv1.setStack(1, new ItemStack(Items.COAL));
+
+            CraftingInventory inv2 = new CraftingInventory(new TestHandler(), 2, 2);
+            for (int i = 0; i < 4; i++) inv2.setStack(i, new ItemStack(Items.OAK_PLANKS));
+
+            CraftingInventory inv3 = new CraftingInventory(new TestHandler(), 3, 3);
+            for (int i = 0; i < 9; i++) {
+                if (i != 4) {
+                    inv3.setStack(i, new ItemStack(Items.OAK_PLANKS));
+                }
+            }
+
+            CraftingInventory inv4 = new CraftingInventory(new TestHandler(), 3, 3);
+            for (int i = 0; i < 9; i++) {
+                if (i != 4) {
+                    inv4.setStack(i, new ItemStack(Items.COBBLESTONE));
+                }
+            }
+
+            CraftingInventory inv5 = new CraftingInventory(new TestHandler(), 3, 3);
+            for (int i = 0; i < 3; i++) {
+                inv5.setStack(i, new ItemStack(Items.OAK_PLANKS));
+            }
+            for (int i = 3; i < 6; i++) {
+                inv5.setStack(i, new ItemStack(Items.WHITE_WOOL));
+            }
+
+            CraftingInventory inv6 = new CraftingInventory(new TestHandler(), 3, 3);
+            inv6.setStack(4, new ItemStack(Items.APPLE));
+            for (int i = 0; i < 9; i++) {
+                if (i != 4) {
+                    inv6.setStack(i, new ItemStack(Items.GOLD_INGOT));
+                }
+            }
+
+            CraftingInventory inv7 = new CraftingInventory(new TestHandler(), 3, 3);
+            inv7.setStack(0, new ItemStack(Items.FLINT));
+            inv7.setStack(1, new ItemStack(Items.STICK));
+            inv7.setStack(2, new ItemStack(Items.FEATHER));
+
+            CraftingInventory inv8 = new CraftingInventory(new TestHandler(), 3, 3);
+
+            inv8.setStack(0, new ItemStack(Items.STICK));
+            inv8.setStack(1, new ItemStack(Items.STICK));
+            inv8.setStack(2, new ItemStack(Items.STICK));
+            inv8.setStack(3, new ItemStack(Items.STICK));
+            inv8.setStack(4, new ItemStack(Items.WHITE_WOOL));
+            inv8.setStack(5, new ItemStack(Items.STICK));
+            inv8.setStack(6, new ItemStack(Items.STICK));
+            inv8.setStack(7, new ItemStack(Items.STICK));
+            inv8.setStack(8, new ItemStack(Items.STICK));
+
+            CraftingInventory inv9 = new CraftingInventory(new TestHandler(), 3, 3);
+            for (int i = 0; i < 3; i++) {
+                inv9.setStack(i, new ItemStack(Items.OAK_PLANKS));
+                inv9.setStack(i + 6, new ItemStack(Items.OAK_PLANKS));
+            }
+            for (int i = 3; i < 6; i++) {
+                inv9.setStack(i, new ItemStack(Items.BOOK));
+            }
+
+            CraftingInventory inv10 = new CraftingInventory(new TestHandler(), 3, 3);
+            inv10.setStack(0, new ItemStack(Items.BOOK));
+            inv10.setStack(1, new ItemStack(Items.DIAMOND));
+            inv10.setStack(2, new ItemStack(Items.BOOK));
+            inv10.setStack(3, new ItemStack(Items.OBSIDIAN));
+            inv10.setStack(4, new ItemStack(Items.OBSIDIAN));
+            inv10.setStack(5, new ItemStack(Items.OBSIDIAN));
+            inv10.setStack(6, new ItemStack(Items.OBSIDIAN));
+            inv10.setStack(7, new ItemStack(Items.OBSIDIAN));
+            inv10.setStack(8, new ItemStack(Items.OBSIDIAN));
+
+            CraftingInventory inv11 = new CraftingInventory(new TestHandler(), 3, 3);
+            inv11.setStack(0, new ItemStack(Items.STICK));
+            inv11.setStack(1, new ItemStack(Items.IRON_INGOT));
+            inv11.setStack(2, new ItemStack(Items.REDSTONE));
+            inv11.setStack(3, new ItemStack(Items.OAK_PLANKS));
+            inv11.setStack(4, new ItemStack(Items.OBSIDIAN));
+            inv11.setStack(5, new ItemStack(Items.BOOK));
+            inv11.setStack(6, new ItemStack(Items.FLINT));
+            inv11.setStack(7, new ItemStack(Items.COBBLESTONE));
+            inv11.setStack(8, new ItemStack(Items.COAL));
+
+            CraftingInventory[] arr = {inv1, inv2, inv3, inv4, inv5, inv6, inv7, inv8, inv9, inv10, inv11};
+            String[] names = {"torch", "workbench", "chest", "furnace", "bed", "golden apple", "arrow", "painting", "bookshelf", "enchanting table", "failed"};
+
+            for (int testCase = 0; testCase < names.length; testCase++) {
+                testFast(mgr, world, arr[testCase].asCraftInput(), names[testCase]);
+                testDefault(mgr, world, arr[testCase].asCraftInput(), names[testCase]);
+            }
+        }
+    }
+
+    private static void testFast(RecipeManager mgr, Level level, CraftingInput input, String recipeName) {
+        long time, time2;
+        long deltaSum = 0;
+        int iterations = 1000;
+        for (int i = 0; i < iterations; i++) {
+            time = System.nanoTime();
+            mgr.getRecipeFor(RecipeType.CRAFTING, input, level);
+            time2 = System.nanoTime();
+            deltaSum += time2 - time;
+        }
+        LOGGER.info("[Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
+    }
+
+    private static void testDefault(RecipeManager mgr, Level level, CraftingInput input, String recipeName) {
+        long time, time2;
+        long deltaSum = 0;
+        int iterations = 1000;
+        for (int i = 0; i < iterations; i++) {
+            time = System.nanoTime();
+            mgr.super_getFirstMatch(RecipeType.CRAFTING, input, level);
+            time2 = System.nanoTime();
+            deltaSum += time2 - time;
+        }
+        LOGGER.info("[Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
+    }
+}
+
 }
 
