@@ -1,18 +1,16 @@
 package fast.fastrecipesearch;
 
 import com.google.gson.JsonElement;
-import net.minecraft.core.HolderLookup;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,12 +20,8 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     private final Map<RecipeType<?>, RecipeDB<?, ?>> cachedDBMap = new ConcurrentHashMap<>();
 
-    public RecipeManager(HolderLookup.Provider registries) {
-        super(registries);
-    }
-
-    public <C extends RecipeInput, T extends Recipe<C>> Optional<RecipeHolder<T>> super_getFirstMatch(RecipeType<T> type, C inv, Level world) {
-        return super.getRecipeFor(type, inv, world, (RecipeHolder<T>) null);
+    public RecipeManager(net.minecraftforge.common.crafting.conditions.ICondition.IContext context) {
+        super(context);
     }
 
     @Override
@@ -37,20 +31,36 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
     }
 
     @Override
-    public <C extends RecipeInput, T extends Recipe<C>> @NotNull Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable RecipeHolder<T> lastRecipe) {
-        if (lastRecipe != null && lastRecipe.value().matches(input, world)) return Optional.of(lastRecipe);
+    public <C extends Container, T extends Recipe<C>> Optional<T> getRecipeFor(RecipeType<T> type, C input, Level world) {
         var cachedRecipeList = getDB(type);
-        return cachedRecipeList.get(input, world);
+        var holder = cachedRecipeList.get(input, world);
+        if (holder != null) return Optional.of(holder.recipe);
+        return Optional.empty();
+    }
+
+    public <C extends Container, T extends Recipe<C>> Optional<Pair<ResourceLocation, T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable ResourceLocation lastRecipe) {
+        Map<ResourceLocation, T> map = this.byType(type);
+        if (lastRecipe != null) {
+            T t = map.get(lastRecipe);
+            if (t != null && t.matches(input, world)) {
+                return Optional.of(Pair.of(lastRecipe, t));
+            }
+        }
+
+        var cachedRecipeList = getDB(type);
+        var holder = cachedRecipeList.get(input, world);
+        if (holder != null) return Optional.of(Pair.of(holder.id, holder.recipe));
+        return Optional.empty();
     }
 
     @Override
-    public <C extends RecipeInput, T extends Recipe<C>> @NotNull List<RecipeHolder<T>> getRecipesFor(RecipeType<T> type, C input, Level world) {
+    public <C extends Container, T extends Recipe<C>> List<T> getRecipesFor(RecipeType<T> type, C input, Level world) {
         var cachedRecipeList = getDB(type);
         return cachedRecipeList.getAll(input, world);
     }
 
     @SuppressWarnings("unchecked")
-    private <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> getDB(RecipeType<T> type) {
+    private <C extends Container, T extends Recipe<C>> RecipeDB<C, T> getDB(RecipeType<T> type) {
         return (RecipeDB<C, T>) cachedDBMap.computeIfAbsent(type, k -> RecipeDB.create(type, byType(type)));
     }
 }

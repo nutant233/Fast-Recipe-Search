@@ -3,53 +3,14 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '1.0.15'
+    alias libs.plugins.modDevGradleLegacy
 }
 
 version = mod_version
-group = mod_group_id
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 repositories {
-    mavenLocal()
-}
-
-base {
-    archivesName = mod_id
-}
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-
-neoForge {
-    version = project.neoforge_version
-
-    mods {
-        extendedae {
-            sourceSet sourceSets.main
-        }
-    }
-
-    runs {
-        client {
-            client()
-        }
-    }
-
-}
-
-repositories {
-    maven {
-        name = "TerraformersMC"
-        url = "https://maven.terraformersmc.com/"
-    }
-    maven {
-        name 'cursemaven'
-        url = "https://www.cursemaven.com"
-    }
-    maven {
-        name = "Modmaven"
-        url = uri("https://modmaven.dev/")
-    }
-    mavenCentral()
     flatDir {
         dir "libs"
     }
@@ -57,21 +18,76 @@ repositories {
 
 dependencies {
     jarJar(implementation("dev:RecipeSearch:1.0"))
-    runtimeOnly "dev.emi:emi-neoforge:1.1.10+1.21"
-    runtimeOnly "curse.maven:jade-324717:5427817"
+    annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 }
 
-tasks.withType(ProcessResources).configureEach {
-    var replaceProperties = [
-            minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
-            neo_version         : neoforge_version, neo_version_range: neoforge_version_range,
-            loader_version_range: loader_version_range,
-            mod_id              : mod_id, mod_name: mod_name, mod_version: mod_version,
-            mod_authors         : mod_authors,
-    ]
-    inputs.properties replaceProperties
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
-        expand replaceProperties
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
+}
+
+legacyForge {
+    version = "${minecraft_version}-${forge_version}"
+
+    parchment {
+        minecraftVersion = parchment_minecraft_version
+        mappingsVersion = parchment_mappings_version
+    }
+
+    runs {
+        client {
+            client()
+            gameDirectory.set(file('run/client'))
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+
+    accessTransformers = project.files('src/main/resources/META-INF/accesstransformer.cfg')
+}
+
+
+base {
+    archivesName = mod_id
+}
+
+afterEvaluate {
+    tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
+        manifest.attributes([
+                'MixinConfigs': "${mod_id}.mixins.json",
+                'Specification-Title': project.name,
+                'Specification-Version': mod_version,
+                'Implementation-Title': base.archivesName,
+                'Implementation-Version': version,
+                'Name': 'fast/fastrecipesearch/mixin',
+                'Sealed': 'true'
+        ])
     }
 }
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            version                 : version,
+            mod_id                  : mod_id,
+            mod_license             : mod_license,
+            mod_name                : mod_name,
+            mod_description         : mod_description,
+            mod_url                 : mod_url,
+            mod_issue_tracker       : mod_issue_tracker
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+legacyForge.ideSyncTask generateModMetadata

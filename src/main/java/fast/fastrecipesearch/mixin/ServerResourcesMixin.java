@@ -5,6 +5,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.world.flag.FeatureFlagSet;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -21,12 +22,12 @@ public class ServerResourcesMixin {
     @Mutable
     private net.minecraft.world.item.crafting.RecipeManager recipes;
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
-    private ReloadableServerResources.ConfigurableRegistryLookup registryLookup;
+    private ICondition.IContext context;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(RegistryAccess.Frozen registryAccess, FeatureFlagSet enabledFeatures, Commands.CommandSelection commandSelection, int functionCompilationLevel, CallbackInfo ci) {
-        this.recipes = new RecipeManager(registryLookup);
+        this.recipes = new RecipeManager(context);
     }
 }
