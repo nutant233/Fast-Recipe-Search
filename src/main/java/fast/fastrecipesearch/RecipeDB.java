@@ -3,9 +3,8 @@ package fast.fastrecipesearch;
 import com.fast.recipesearch.AbstractContainerRecipeDB;
 import com.fast.recipesearch.IntLongMap;
 import com.google.common.base.Stopwatch;
-import it.unimi.dsi.fastutil.Function;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,11 +19,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 
 class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractContainerRecipeDB<IRecipeHolder<T>> {
 
     private int maxInputAmount;
-    private Reference2ReferenceMap<Item, IntList> hashCode = new Reference2ReferenceOpenHashMap<>();
+    private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
     private final Reference2ReferenceMap<Item, int[]> hash = new Reference2ReferenceOpenHashMap<>();
 
     private RecipeDB(List<Runnable> branchBuilder) {
@@ -39,7 +40,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         return db;
     }
 
-    public Optional<RecipeHolder<T>> get(C inv, Level world) {
+    Optional<RecipeHolder<T>> get(C inv, Level world) {
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
@@ -53,7 +54,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         return Optional.empty();
     }
 
-    public List<RecipeHolder<T>> getAll(C inv, Level world) {
+    List<RecipeHolder<T>> getAll(C inv, Level world) {
         var list = new ArrayList<RecipeHolder<T>>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
@@ -69,14 +70,14 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
     private Function<IRecipeHolder<T>, IRecipeHolder<T>> getFunction(IntLongMap map, C inv, Level world) {
         if (maxInputAmount > 1) {
             return o -> {
-                var r = (IRecipeHolder<T>) o;
+                var r = o;
                 var c = r.getIntContainer();
                 if ((c == null || c.match(map)) && r.self().value().matches(inv, world)) return r;
                 return null;
             };
         }
         return o -> {
-            var r = (IRecipeHolder<T>) o;
+            var r = o;
             return r.self().value().matches(inv, world) ? r : null;
         };
     }
@@ -99,10 +100,8 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
     @Override
     public void build(List<Runnable> branchBuilder) {
         super.build(branchBuilder);
-        hashCode.forEach((k, v) -> {
-            hash.put(k, v.toIntArray());
-        });
-        hashCode = null;
+        rawHash.forEach((k, v) -> hash.put(k, v.toIntArray()));
+        rawHash = null;
     }
 
     @Override
@@ -115,14 +114,26 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.self().value().getIngredients()) {
-            if (!ingredient.isCustom() && ingredient.values.length == 1) {
+            if (ingredient.isCustom()) {
+                var action = Fastrecipesearch.CUSTOM.get(ingredient.getCustomIngredient().getClass());
+                if (action != null) {
+                    var set = new IntOpenHashSet();
+                    ObjIntConsumer<Item> consumer = (item, hash) -> {
+                        set.add(hash);
+                        rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
+                    };
+                    action.accept(ingredient.getCustomIngredient(), consumer);
+                    set.forEach(i -> map.add(i, 1));
+                    if (!set.isEmpty()) inputAmount++;
+                }
+            } else if (ingredient.values.length == 1) {
                 if (ingredient.values[0] instanceof Ingredient.ItemValue(ItemStack stack)) {
                     var item = stack.getItem();
                     if (item != Items.AIR) {
                         var hash = item.hashCode();
                         map.add(hash, 1);
                         inputAmount++;
-                        hashCode.computeIfAbsent(item, i -> new IntArrayList()).add(hash);
+                        rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
                     }
                 } else if (ingredient.values[0] instanceof Ingredient.TagValue(TagKey<Item> tag)) {
                     var o = BuiltInRegistries.ITEM.getTag(tag).orElse(null);
@@ -130,7 +141,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                         var hash = tag.hashCode();
                         map.add(hash, 1);
                         inputAmount++;
-                        o.forEach(h -> hashCode.computeIfAbsent(h.value(), i -> new IntArrayList()).add(hash));
+                        o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
                     }
                 }
             }
