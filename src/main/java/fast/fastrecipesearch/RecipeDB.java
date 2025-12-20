@@ -117,23 +117,31 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.self().value().getIngredients()) {
-            if (ingredient.entries.length == 1 && ingredient.getClass() == Ingredient.class) {
-                if (ingredient.entries[0] instanceof Ingredient.StackEntry(ItemStack stack)) {
-                    var item = stack.getItem();
-                    if (item != Items.AIR) {
-                        var hash = item.hashCode();
-                        map.add(hash, 1);
-                        inputAmount++;
-                        rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
+            if (ingredient.getClass() == Ingredient.class) {
+                if (ingredient.entries.length == 1) {
+                    if (ingredient.entries[0] instanceof Ingredient.StackEntry(ItemStack stack)) {
+                        var item = stack.getItem();
+                        if (item != Items.AIR) {
+                            var hash = item.hashCode();
+                            map.add(hash, 1);
+                            inputAmount++;
+                            rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
+                        }
+                    } else if (ingredient.entries[0] instanceof Ingredient.TagEntry(TagKey<Item> tag)) {
+                        var o = Registries.ITEM.getEntryList(tag).orElse(null);
+                        if (o != null) {
+                            var hash = tag.hashCode();
+                            map.add(hash, 1);
+                            inputAmount++;
+                            o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
+                        }
                     }
-                } else if (ingredient.entries[0] instanceof Ingredient.TagEntry(TagKey<Item> tag)) {
-                    var o = Registries.ITEM.getEntryList(tag).orElse(null);
-                    if (o != null) {
-                        var hash = tag.hashCode();
-                        map.add(hash, 1);
-                        inputAmount++;
-                        o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
-                    }
+                }
+            } else {
+                var action = Fastrecipesearch.CUSTOM.get(ingredient);
+                if (action != null) {
+                    action.accept(map, ingredient);
+                    inputAmount++;
                 }
             }
         }
