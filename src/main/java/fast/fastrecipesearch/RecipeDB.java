@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.ObjIntConsumer;
 
 class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractContainerRecipeDB<IRecipeHolder<T>> {
 
@@ -138,10 +139,16 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                     }
                 }
             } else {
-                var action = Fastrecipesearch.CUSTOM.get(ingredient);
+                var action = Fastrecipesearch.CUSTOM.get(ingredient.getClass());
                 if (action != null) {
-                    action.accept(map, ingredient);
-                    inputAmount++;
+                    var set = new IntOpenHashSet();
+                    ObjIntConsumer<Item> consumer = (item, hash) -> {
+                        set.add(hash);
+                        rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
+                    };
+                    action.accept(ingredient, consumer);
+                    set.forEach(i -> map.add(i, 1));
+                    if (!set.isEmpty()) inputAmount++;
                 }
             }
         }
