@@ -4,8 +4,8 @@ import com.fast.recipesearch.AbstractContainerRecipeDB;
 import com.fast.recipesearch.IntLongMap;
 import com.google.common.base.Stopwatch;
 import it.unimi.dsi.fastutil.Function;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.item.Item;
@@ -28,7 +28,7 @@ import java.util.Optional;
 class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractContainerRecipeDB<IRecipeHolder<T>> {
 
     private int maxInputAmount;
-    private Reference2ReferenceMap<Item, IntList> hashCode = new Reference2ReferenceOpenHashMap<>();
+    private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
     private final Reference2ReferenceMap<Item, int[]> hash = new Reference2ReferenceOpenHashMap<>();
 
     private RecipeDB(List<Runnable> branchBuilder) {
@@ -43,7 +43,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         return db;
     }
 
-    public Optional<RecipeEntry<T>> get(C inv, World world) {
+    Optional<RecipeEntry<T>> get(C inv, World world) {
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
@@ -57,7 +57,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         return Optional.empty();
     }
 
-    public List<RecipeEntry<T>> getAll(C inv, World world) {
+    List<RecipeEntry<T>> getAll(C inv, World world) {
         var list = new ArrayList<RecipeEntry<T>>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
@@ -103,10 +103,8 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
     @Override
     public void build(List<Runnable> branchBuilder) {
         super.build(branchBuilder);
-        hashCode.forEach((k, v) -> {
-            hash.put(k, v.toIntArray());
-        });
-        hashCode = null;
+        rawHash.forEach((k, v) -> hash.put(k, v.toIntArray()));
+        rawHash = null;
     }
 
     @Override
@@ -119,14 +117,14 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.self().value().getIngredients()) {
-            if (ingredient.entries.length == 1) {
+            if (ingredient.entries.length == 1 && ingredient.getClass() == Ingredient.class) {
                 if (ingredient.entries[0] instanceof Ingredient.StackEntry(ItemStack stack)) {
                     var item = stack.getItem();
                     if (item != Items.AIR) {
                         var hash = item.hashCode();
                         map.add(hash, 1);
                         inputAmount++;
-                        hashCode.computeIfAbsent(item, i -> new IntArrayList()).add(hash);
+                        rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
                     }
                 } else if (ingredient.entries[0] instanceof Ingredient.TagEntry(TagKey<Item> tag)) {
                     var o = Registries.ITEM.getEntryList(tag).orElse(null);
@@ -134,7 +132,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                         var hash = tag.hashCode();
                         map.add(hash, 1);
                         inputAmount++;
-                        o.forEach(h -> hashCode.computeIfAbsent(h.value(), i -> new IntArrayList()).add(hash));
+                        o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
                     }
                 }
             }

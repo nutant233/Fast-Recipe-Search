@@ -5,3 +5,5 @@ accessible field net/minecraft/recipe/Ingredient entries [Lnet/minecraft/recipe/
 accessible class net/minecraft/recipe/Ingredient$Entry
 accessible class net/minecraft/recipe/Ingredient$StackEntry
 accessible class net/minecraft/recipe/Ingredient$TagEntry
+
+extendable class net/minecraft/recipe/Ingredient

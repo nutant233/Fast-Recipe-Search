@@ -10,7 +10,8 @@ public class Fastrecipesearch implements ModInitializer {
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     @Override
-    public void onInitialize() {}
+    public void onInitialize() {
+    }
 
 
 }
