@@ -22,6 +22,7 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ObjIntConsumer;
 
 class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContainerRecipeDB<RecipeHolder<C, T>> {
 
@@ -112,23 +113,37 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.recipe.getIngredients()) {
-            if (ingredient.isVanilla() && ingredient.values.length == 1) {
-                if (ingredient.values[0] instanceof Ingredient.ItemValue itemValue) {
-                    var item = itemValue.item.getItem();
-                    if (item != Items.AIR) {
-                        var hash = item.hashCode();
-                        map.add(hash, 1);
-                        inputAmount++;
+            if (ingredient.isVanilla()) {
+                if (ingredient.values.length == 1) {
+                    if (ingredient.values[0] instanceof Ingredient.ItemValue itemValue) {
+                        var item = itemValue.item.getItem();
+                        if (item != Items.AIR) {
+                            var hash = item.hashCode();
+                            map.add(hash, 1);
+                            inputAmount++;
+                            rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
+                        }
+                    } else if (ingredient.values[0] instanceof Ingredient.TagValue tagValue) {
+                        var o = BuiltInRegistries.ITEM.getTag(tagValue.tag).orElse(null);
+                        if (o != null) {
+                            var hash = tagValue.tag.hashCode();
+                            map.add(hash, 1);
+                            inputAmount++;
+                            o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
+                        }
+                    }
+                }
+            } else {
+                var action = Fastrecipesearch.CUSTOM.get(ingredient.getClass());
+                if (action != null) {
+                    var set = new IntOpenHashSet();
+                    ObjIntConsumer<Item> consumer = (item, hash) -> {
+                        set.add(hash);
                         rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
-                    }
-                } else if (ingredient.values[0] instanceof Ingredient.TagValue tagValue) {
-                    var o = BuiltInRegistries.ITEM.getTag(tagValue.tag).orElse(null);
-                    if (o != null) {
-                        var hash = tagValue.tag.hashCode();
-                        map.add(hash, 1);
-                        inputAmount++;
-                        o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
-                    }
+                    };
+                    action.accept(ingredient, consumer);
+                    set.forEach(i -> map.add(i, 1));
+                    if (!set.isEmpty()) inputAmount++;
                 }
             }
         }
