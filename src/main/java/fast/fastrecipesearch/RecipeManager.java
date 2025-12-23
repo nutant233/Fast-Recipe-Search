@@ -31,6 +31,12 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
     }
 
     @Override
+    public void replaceRecipes(Iterable<Recipe<?>> recipes) {
+        super.replaceRecipes(recipes);
+        cachedDBMap.clear();
+    }
+
+    @Override
     public <C extends Container, T extends Recipe<C>> Optional<T> getRecipeFor(RecipeType<T> type, C input, Level world) {
         var cachedRecipeList = getDB(type);
         var holder = cachedRecipeList.get(input, world);
@@ -38,6 +44,7 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
         return Optional.empty();
     }
 
+    @Override
     public <C extends Container, T extends Recipe<C>> Optional<Pair<ResourceLocation, T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable ResourceLocation lastRecipe) {
         Map<ResourceLocation, T> map = this.byType(type);
         if (lastRecipe != null) {

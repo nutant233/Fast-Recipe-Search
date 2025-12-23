@@ -14,11 +14,22 @@ repositories {
     flatDir {
         dir "libs"
     }
+
+    exclusiveContent {
+        forRepository { maven { url = "https://cursemaven.com" } }
+        filter { includeGroup("curse.maven") }
+    }
 }
 
 dependencies {
     jarJar(implementation("dev:RecipeSearch:1.0"))
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
+
+    modImplementation("curse.maven:create-328085:7178761")
+
+    modImplementation("curse.maven:applied-energistics-2-223794:7148487")
+
+    modImplementation("curse.maven:mekanism-268560:6552911")
 }
 
 tasks.withType(JavaCompile).configureEach {
