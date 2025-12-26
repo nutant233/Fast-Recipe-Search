@@ -20,6 +20,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ObjIntConsumer;
@@ -63,6 +64,8 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
             }
         }
         searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(r -> list.add(r.recipe));
+        if (!list.isEmpty())
+            list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
         return list;
     }
 
