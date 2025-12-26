@@ -55,16 +55,17 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
     }
 
     List<T> getAll(C inv, Level world) {
+        var list = new ArrayList<T>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                var list = new ArrayList<RecipeHolder<C, T>>();
-                search(map.toIntArray(), getFunction(map, inv, world)).forEach(list::add);
-                return list.stream().sorted(Comparator.comparing(r -> r.id)).map(r -> r.recipe).toList();
+                search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.recipe));
+                list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
+                return list;
             }
         }
-        var list = new ArrayList<T>();
         searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(r -> list.add(r.recipe));
+        list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
         return list;
     }
 

@@ -7,13 +7,11 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.stream.Stream;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Ingredient.class)
 public abstract class IngredientMixin {
@@ -47,24 +45,19 @@ public abstract class IngredientMixin {
         }
     }
 
-    /**
-     * @author nutant233
-     * @reason ensure consistency between both
-     */
-    @Overwrite
-    public static Ingredient fromNetwork(FriendlyByteBuf buffer) {
-        var size = buffer.readVarInt();
+    @Inject(method = "fromNetwork", at = @At(value = "HEAD"), cancellable = true)
+    private static void fromNetwork(FriendlyByteBuf buffer, CallbackInfoReturnable<Ingredient> cir) {
+        buffer.markReaderIndex();
+        int size = buffer.readVarInt();
+        buffer.resetReaderIndex();
         if (size == -2) {
             if (buffer.readBoolean()) {
                 var tag = TagKey.create(Registries.ITEM, buffer.readResourceLocation());
-                return Ingredient.of(tag);
+                cir.setReturnValue(Ingredient.of(tag));
             } else {
                 var item = BuiltInRegistries.ITEM.byId(buffer.readInt());
-                return Ingredient.of(item);
+                cir.setReturnValue(Ingredient.of(item));
             }
         }
-        if (size == -1)
-            return net.minecraftforge.common.crafting.CraftingHelper.getIngredient(buffer.readResourceLocation(), buffer);
-        return Ingredient.fromValues(Stream.generate(() -> new Ingredient.ItemValue(buffer.readItem())).limit(size));
     }
 }
