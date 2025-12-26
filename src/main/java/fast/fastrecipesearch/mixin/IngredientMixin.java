@@ -49,7 +49,6 @@ public abstract class IngredientMixin {
     private static void fromNetwork(FriendlyByteBuf buffer, CallbackInfoReturnable<Ingredient> cir) {
         buffer.markReaderIndex();
         int size = buffer.readVarInt();
-        buffer.resetReaderIndex();
         if (size == -2) {
             if (buffer.readBoolean()) {
                 var tag = TagKey.create(Registries.ITEM, buffer.readResourceLocation());
@@ -58,6 +57,8 @@ public abstract class IngredientMixin {
                 var item = BuiltInRegistries.ITEM.byId(buffer.readInt());
                 cir.setReturnValue(Ingredient.of(item));
             }
+        } else {
+            buffer.resetReaderIndex();
         }
     }
 }
