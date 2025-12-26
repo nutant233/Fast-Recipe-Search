@@ -1,3 +1,10 @@
+## Compatibility
+This mod is compatible with any mod that uses the original recipe manager for searching recipes. It is completely incompatible with Recipe Essentials (or FastSuite), as they optimize the same part of the system. According to my test results, installing this mod is sufficient—it offers better optimization and compatibility. Recipe Essentials relies on caching (which generally performs poorly), while FastSuite uses parallel processing (distributing performance consumption across multiple threads and potentially introducing compatibility issues).
+Regarding Client Crafting, there is no conflict, but it first searches on the client side and then waits for the server to send search results. Since this mod significantly optimizes search speed on the server side, Client Crafting becomes less meaningful. Additionally, this mod only optimizes the server-side portion, leaving the client-side recipe manager using the original method. This could result in a negative optimization state where the client is still searching while the server has already completed its search.
+
+中文：本模组兼容所有使用原版配方管理器进行配方搜索的模组。它与Recipe Essentials（或FastSuite）完全无法兼容，因为它们优化的是同一模块。根据我的测试结果，安装本模组即可实现最优效果——它在提供更佳优化性能的同时保证了兼容性。Recipe Essentials依赖缓存机制（通常表现不佳），而FastSuite采用并行处理（将性能消耗分散到多个线程，且可能引发兼容性问题）。
+关于Client Crafting，两者并无冲突，但客户端会先在本地搜索配方，随后仍需等待服务器返回搜索结果。由于本模组对服务端搜索速度进行了显著优化，客户端合成的实际意义便随之减弱。此外，本模组仅优化了服务端部分，客户端配方管理器仍采用原版搜索方式。这可能导致一种负优化状态：当客户端仍在进行本地搜索时，服务器早已完成搜索响应。
+
 ## ATM 10 Test
 
 [18Dec2025 12:55:04.510] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 135018.2 ns to find the recipe for torch
