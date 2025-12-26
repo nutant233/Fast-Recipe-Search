@@ -30,14 +30,14 @@ public class Fastrecipesearch {
         registerCustom(BlockTagIngredient.class, (i, consumer) -> {
             var o = BuiltInRegistries.BLOCK.getTag(i.getTag()).orElse(null);
             if (o != null) {
-                var hash = i.getTag().hashCode();
+                var hash = i.getTag().location().hashCode();
                 o.forEach(h -> consumer.accept(h.value().asItem(), hash));
             }
         });
         registerCustom(DataComponentIngredient.class, (i, consumer) -> {
             if (i.items().size() == 1) {
                 var item = i.items().get(0).value();
-                consumer.accept(item, item.hashCode());
+                consumer.accept(item, BuiltInRegistries.ITEM.getKey(item).hashCode());
             }
         });
     }

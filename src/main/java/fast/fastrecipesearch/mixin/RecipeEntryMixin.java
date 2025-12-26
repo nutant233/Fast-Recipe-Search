@@ -11,15 +11,15 @@ import org.spongepowered.asm.mixin.Unique;
 public class RecipeEntryMixin<T extends Recipe<?>> implements IRecipeHolder<T> {
 
     @Unique
-    private IntMapContainer container;
+    private IntMapContainer fastRecipeSearch$container;
 
     @Override
     public IntMapContainer getIntContainer() {
-        return container;
+        return fastRecipeSearch$container;
     }
 
     @Override
     public void setIntContainer(IntMapContainer intMapContainer) {
-        container = intMapContainer;
+        fastRecipeSearch$container = intMapContainer;
     }
 }

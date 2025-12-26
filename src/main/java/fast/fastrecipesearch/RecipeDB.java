@@ -15,10 +15,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.ObjIntConsumer;
 
@@ -60,10 +57,12 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
                 search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.self()));
+                list.sort(Comparator.comparing((p_335290_) -> p_335290_.value().getResultItem(world.registryAccess()).getDescriptionId()));
                 return list;
             }
         }
         searchFallback(r -> r.self().value().matches(inv, world) ? r : null).forEach(r -> list.add(r.self()));
+        list.sort(Comparator.comparing((p_335290_) -> p_335290_.value().getResultItem(world.registryAccess()).getDescriptionId()));
         return list;
     }
 
@@ -130,7 +129,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                 if (ingredient.values[0] instanceof Ingredient.ItemValue(ItemStack stack)) {
                     var item = stack.getItem();
                     if (item != Items.AIR) {
-                        var hash = item.hashCode();
+                        var hash = BuiltInRegistries.ITEM.getKey(item).hashCode();
                         map.add(hash, 1);
                         inputAmount++;
                         rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
@@ -138,7 +137,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                 } else if (ingredient.values[0] instanceof Ingredient.TagValue(TagKey<Item> tag)) {
                     var o = BuiltInRegistries.ITEM.getTag(tag).orElse(null);
                     if (o != null) {
-                        var hash = tag.hashCode();
+                        var hash = tag.location().hashCode();
                         map.add(hash, 1);
                         inputAmount++;
                         o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));

@@ -4,11 +4,15 @@
   "package": "fast.fastrecipesearch.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "IngredientMixin",
     "RecipeEntryMixin",
     "ServerResourcesMixin"
   ],
   "injectors": {
     "defaultRequire": 1,
     "maxShiftBy": 5
-  }
+  },
+  "client": [
+    "ClientPacketListenerMixin"
+  ]
 }
