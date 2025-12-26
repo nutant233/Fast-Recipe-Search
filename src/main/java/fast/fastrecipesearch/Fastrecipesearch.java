@@ -1,6 +1,7 @@
 package fast.fastrecipesearch;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -31,7 +32,7 @@ public class Fastrecipesearch {
             if (i.values.length == 1 && i.values[0] instanceof Ingredient.ItemValue itemValue) {
                 var item = itemValue.item.getItem();
                 if (item != Items.AIR) {
-                    consumer.accept(item, item.hashCode());
+                    consumer.accept(item, BuiltInRegistries.ITEM.getKey(item).hashCode());
                 }
             }
         });
@@ -39,7 +40,7 @@ public class Fastrecipesearch {
             if (i.values.length == 1 && i.values[0] instanceof Ingredient.ItemValue itemValue) {
                 var item = itemValue.item.getItem();
                 if (item != Items.AIR) {
-                    consumer.accept(item, item.hashCode());
+                    consumer.accept(item, BuiltInRegistries.ITEM.getKey(item).hashCode());
                 }
             }
         });

@@ -55,17 +55,16 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
     }
 
     List<T> getAll(C inv, Level world) {
-        var list = new ArrayList<T>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.recipe));
-                return list;
+                var list = new ArrayList<RecipeHolder<C, T>>();
+                search(map.toIntArray(), getFunction(map, inv, world)).forEach(list::add);
+                return list.stream().sorted(Comparator.comparing(r -> r.id)).map(r -> r.recipe).toList();
             }
         }
+        var list = new ArrayList<T>();
         searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(r -> list.add(r.recipe));
-        if (!list.isEmpty())
-            list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
         return list;
     }
 
@@ -121,7 +120,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
                     if (ingredient.values[0] instanceof Ingredient.ItemValue itemValue) {
                         var item = itemValue.item.getItem();
                         if (item != Items.AIR) {
-                            var hash = item.hashCode();
+                            var hash = BuiltInRegistries.ITEM.getKey(item).hashCode();
                             map.add(hash, 1);
                             inputAmount++;
                             rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
@@ -129,7 +128,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
                     } else if (ingredient.values[0] instanceof Ingredient.TagValue tagValue) {
                         var o = BuiltInRegistries.ITEM.getTag(tagValue.tag).orElse(null);
                         if (o != null) {
-                            var hash = tagValue.tag.hashCode();
+                            var hash = tagValue.tag.location().hashCode();
                             map.add(hash, 1);
                             inputAmount++;
                             o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
