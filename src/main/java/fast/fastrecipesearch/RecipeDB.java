@@ -20,10 +20,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.ObjIntConsumer;
 
 class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractContainerRecipeDB<IRecipeHolder<T>> {
@@ -64,10 +61,12 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
                 search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.self()));
+                list.sort(Comparator.comparing((entry) -> entry.value().getResult(world.getRegistryManager()).getTranslationKey()));
                 return list;
             }
         }
         searchFallback(r -> r.self().value().matches(inv, world) ? r : null).forEach(r -> list.add(r.self()));
+        list.sort(Comparator.comparing((entry) -> entry.value().getResult(world.getRegistryManager()).getTranslationKey()));
         return list;
     }
 
@@ -123,7 +122,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                     if (ingredient.entries[0] instanceof Ingredient.StackEntry(ItemStack stack)) {
                         var item = stack.getItem();
                         if (item != Items.AIR) {
-                            var hash = item.hashCode();
+                            var hash = Registries.ITEM.getId(item).hashCode();
                             map.add(hash, 1);
                             inputAmount++;
                             rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
@@ -131,7 +130,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
                     } else if (ingredient.entries[0] instanceof Ingredient.TagEntry(TagKey<Item> tag)) {
                         var o = Registries.ITEM.getEntryList(tag).orElse(null);
                         if (o != null) {
-                            var hash = tag.hashCode();
+                            var hash = tag.id().hashCode();
                             map.add(hash, 1);
                             inputAmount++;
                             o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));

@@ -7,3 +7,5 @@ accessible class net/minecraft/recipe/Ingredient$StackEntry
 accessible class net/minecraft/recipe/Ingredient$TagEntry
 
 extendable class net/minecraft/recipe/Ingredient
+
+accessible method net/minecraft/recipe/Ingredient ofEntries (Ljava/util/stream/Stream;)Lnet/minecraft/recipe/Ingredient;
