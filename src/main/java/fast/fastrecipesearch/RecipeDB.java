@@ -47,8 +47,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                var holder = findAnyMatch(map.toIntArray(), getFunction(map, inv, world));
-                return holder;
+                return findAnyMatch(map, map.toIntArray(), getFunction(map, inv, world));
             }
         }
         return findInSerial(this.serialRecipes, r -> r.recipe.matches(inv, world) ? r : null);
@@ -59,7 +58,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.recipe));
+                search(map, map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.recipe));
                 list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
                 return list;
             }

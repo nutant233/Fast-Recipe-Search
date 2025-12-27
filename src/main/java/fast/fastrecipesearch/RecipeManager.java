@@ -24,6 +24,10 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
         super(context);
     }
 
+    public <C extends Container, T extends Recipe<C>> List<T> super_getRecipeFor(RecipeType<T> type, C input, Level world) {
+        return super.getRecipesFor(type, input, world);
+    }
+
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> p_44037_, ResourceManager p_44038_, ProfilerFiller p_44039_) {
         super.apply(p_44037_, p_44038_, p_44039_);

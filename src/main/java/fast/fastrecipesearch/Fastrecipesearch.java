@@ -18,6 +18,7 @@ import java.util.function.ObjIntConsumer;
 @Mod(Fastrecipesearch.MODID)
 public class Fastrecipesearch {
 
+    public static boolean DEBUG = false;
     public static final String MODID = "fastrecipesearch";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
@@ -28,6 +29,7 @@ public class Fastrecipesearch {
     }
 
     static {
+        if (DEBUG) new FastSuiteTest();
         registerCustom(PartialNBTIngredient.class, (i, consumer) -> {
             if (i.values.length == 1 && i.values[0] instanceof Ingredient.ItemValue itemValue) {
                 var item = itemValue.item.getItem();

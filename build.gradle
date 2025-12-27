@@ -19,11 +19,21 @@ repositories {
         forRepository { maven { url = "https://cursemaven.com" } }
         filter { includeGroup("curse.maven") }
     }
+    maven {
+        url "https://maven.shadowsoffire.dev/releases"
+        content {
+            includeGroup "dev.shadowsoffire"
+        }
+    }
 }
 
 dependencies {
-    jarJar(implementation("dev:RecipeSearch:1.0"))
+    jarJar(implementation("dev:RecipeSearch:1.1"))
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
+
+    modImplementation("dev.shadowsoffire:Placebo:${project.minecraft_version}-8.6.2")
+    modImplementation("dev.shadowsoffire:FastSuite:${project.minecraft_version}-5.1.0")
+
 }
 
 tasks.withType(JavaCompile).configureEach {
