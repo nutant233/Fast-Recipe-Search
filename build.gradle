@@ -34,6 +34,7 @@ dependencies {
     modImplementation("dev.shadowsoffire:Placebo:${project.minecraft_version}-8.6.2")
     modImplementation("dev.shadowsoffire:FastSuite:${project.minecraft_version}-5.1.0")
 
+    modImplementation("curse.maven:polymorph-388800:6450982")
 }
 
 tasks.withType(JavaCompile).configureEach {

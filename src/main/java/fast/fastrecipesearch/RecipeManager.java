@@ -2,6 +2,7 @@ package fast.fastrecipesearch;
 
 import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Pair;
+import fast.fastrecipesearch.compat.Polymorph;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -9,6 +10,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -42,6 +44,10 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends Container, T extends Recipe<C>> Optional<T> getRecipeFor(RecipeType<T> type, C input, Level world) {
+        if (Fastrecipesearch.polymorph && input instanceof BlockEntity blockEntity) {
+            var recipe = Polymorph.getBlockEntityRecipe(type, input, world, blockEntity);
+            if (recipe != null) return Optional.of(recipe);
+        }
         var cachedRecipeList = getDB(type);
         var holder = cachedRecipeList.get(input, world);
         if (holder != null) return Optional.of(holder.recipe);
@@ -50,6 +56,10 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends Container, T extends Recipe<C>> Optional<Pair<ResourceLocation, T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable ResourceLocation lastRecipe) {
+        if (Fastrecipesearch.polymorph && input instanceof BlockEntity blockEntity) {
+            var recipe = Polymorph.getBlockEntityRecipe(type, input, world, blockEntity);
+            if (recipe != null) return Optional.of(Pair.of(recipe.getId(), recipe));
+        }
         Map<ResourceLocation, T> map = this.byType(type);
         if (lastRecipe != null) {
             T t = map.get(lastRecipe);

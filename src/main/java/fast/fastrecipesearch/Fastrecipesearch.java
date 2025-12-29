@@ -8,6 +8,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.common.crafting.PartialNBTIngredient;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,6 +24,8 @@ public class Fastrecipesearch {
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
+
+    static final boolean polymorph;
 
     public static <T extends Ingredient> void registerCustom(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
         CUSTOM.put(clazz, consumer);
@@ -46,5 +49,6 @@ public class Fastrecipesearch {
                 }
             }
         });
+        polymorph = FMLLoader.getLoadingModList().getModFileById("polymorph") != null;
     }
 }
