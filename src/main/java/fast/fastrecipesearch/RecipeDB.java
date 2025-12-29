@@ -45,7 +45,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                var holder = findAnyMatch(map.toIntArray(), getFunction(map, inv, world));
+                var holder = findAnyMatch(map, map.toIntArray(), getFunction(map, inv, world));
                 if (holder != null) return Optional.of(holder.self());
                 return Optional.empty();
             }
@@ -60,7 +60,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                search(map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.self()));
+                search(map, map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.self()));
                 list.sort(Comparator.comparing((entry) -> entry.value().getResult(world.getRegistryManager()).getTranslationKey()));
                 return list;
             }

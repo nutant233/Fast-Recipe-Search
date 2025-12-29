@@ -1,6 +1,7 @@
 package fast.fastrecipesearch;
 
 import com.google.gson.JsonElement;
+import fast.fastrecipesearch.compat.Polymorph;
 import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeEntry;
 import net.minecraft.recipe.RecipeType;
@@ -38,6 +39,10 @@ public class RecipeManager extends net.minecraft.recipe.RecipeManager {
 
     @Override
     public <C extends RecipeInput, T extends Recipe<C>> @NotNull Optional<RecipeEntry<T>> getFirstMatch(RecipeType<T> type, C input, World world, @Nullable RecipeEntry<T> lastRecipe) {
+        if (Fastrecipesearch.polymorph) {
+            var recipe = Polymorph.getBlockEntityRecipe(this, type, input, world);
+            if (recipe != null) return Optional.of(recipe);
+        }
         if (lastRecipe != null && lastRecipe.value().matches(input, world)) return Optional.of(lastRecipe);
         var cachedRecipeList = getDB(type);
         return cachedRecipeList.get(input, world);

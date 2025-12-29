@@ -26,14 +26,19 @@ repositories {
     flatDir {
         dir "libs"
     }
+    maven {
+        name 'cursemaven'
+        url = "https://www.cursemaven.com"
+    }
 }
 
 dependencies {
-    include(implementation("dev:RecipeSearch:1.0"))
+    include(implementation("dev:RecipeSearch:1.1"))
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+    modImplementation "curse.maven:polymorph-388800:6794587"
 }
 
 processResources {
