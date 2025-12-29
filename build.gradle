@@ -56,9 +56,11 @@ repositories {
 }
 
 dependencies {
-    jarJar(implementation("dev:RecipeSearch:1.0"))
+    jarJar(implementation("dev:RecipeSearch:1.1"))
     runtimeOnly "dev.emi:emi-neoforge:1.1.10+1.21"
     runtimeOnly "curse.maven:jade-324717:5427817"
+
+    implementation "curse.maven:polymorph-388800:6794589"
 }
 
 tasks.withType(ProcessResources).configureEach {

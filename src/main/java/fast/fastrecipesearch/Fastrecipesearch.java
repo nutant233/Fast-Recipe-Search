@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.crafting.BlockTagIngredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
@@ -21,6 +22,8 @@ public class Fastrecipesearch {
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
+
+    static final boolean polymorph;
 
     public static <T extends ICustomIngredient> void registerCustom(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
         CUSTOM.put(clazz, consumer);
@@ -40,6 +43,7 @@ public class Fastrecipesearch {
                 consumer.accept(item, BuiltInRegistries.ITEM.getKey(item).hashCode());
             }
         });
+        polymorph = FMLLoader.getLoadingModList().getModFileById("polymorph") != null;
     }
 
 }
