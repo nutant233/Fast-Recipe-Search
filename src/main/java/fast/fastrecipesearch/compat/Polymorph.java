@@ -14,7 +14,7 @@ public class Polymorph {
         if (data instanceof BlockEntity blockEntity) {
             data = PolymorphApi.getInstance().getBlockEntityRecipeData(blockEntity);
             if (data != null) {
-                PolymorphApi.getInstance().getRecipeManager().getBlockEntityRecipe(type, inventory, level, blockEntity).orElse(null);
+                return PolymorphApi.getInstance().getRecipeManager().getBlockEntityRecipe(type, inventory, level, blockEntity).orElse(null);
             }
         }
         return null;
