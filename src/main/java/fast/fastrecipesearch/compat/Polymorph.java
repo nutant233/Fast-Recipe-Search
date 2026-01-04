@@ -10,9 +10,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public class Polymorph {
 
     public static <I extends RecipeInput, T extends Recipe<I>> RecipeHolder<T> getBlockEntityRecipe(RecipeManager manager, RecipeType<T> type, I inventory, Level level) {
-        IRecipeData<?> data = (IRecipeData<?>) ((IRecipeContext) manager).polymorph$getContext();
-        if (data instanceof BlockEntity blockEntity) {
-            data = PolymorphApi.getInstance().getBlockEntityRecipeData(blockEntity);
+        if (((IRecipeContext) manager).polymorph$getContext() instanceof BlockEntity blockEntity) {
+            IRecipeData<?> data = PolymorphApi.getInstance().getBlockEntityRecipeData(blockEntity);
             if (data != null) {
                 return PolymorphApi.getInstance().getRecipeManager().getBlockEntityRecipe(type, inventory, level, blockEntity).orElse(null);
             }
