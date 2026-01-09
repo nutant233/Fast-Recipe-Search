@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(Ingredient.class)
+@Mixin(value = Ingredient.class, priority = 900)
 public abstract class IngredientMixin {
 
     @Shadow

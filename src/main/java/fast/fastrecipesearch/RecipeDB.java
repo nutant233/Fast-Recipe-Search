@@ -24,8 +24,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ObjIntConsumer;
+import java.util.stream.Collectors;
 
 class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContainerRecipeDB<RecipeHolder<C, T>> {
+
+    private static final Comparator<RecipeHolder<?, ?>> COMPARATOR = Comparator.comparing(r -> r.id);
 
     private int maxInputAmount;
     private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
@@ -54,18 +57,16 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
     }
 
     List<T> getAll(C inv, Level world) {
-        var list = new ArrayList<T>();
+        var list = new ArrayList<RecipeHolder<C, T>>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                search(map, map.toIntArray(), getFunction(map, inv, world)).forEach(r -> list.add(r.recipe));
-                list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
-                return list;
+                search(map, map.toIntArray(), getFunction(map, inv, world)).forEach(list::add);
+                return list.stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
             }
         }
-        searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(r -> list.add(r.recipe));
-        list.sort(Comparator.comparing((p_270043_) -> p_270043_.getResultItem(world.registryAccess()).getDescriptionId()));
-        return list;
+        searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(list::add);
+        return list.stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
     }
 
     private Function<RecipeHolder<C, T>, RecipeHolder<C, T>> getFunction(IntLongMap map, C inv, Level world) {
