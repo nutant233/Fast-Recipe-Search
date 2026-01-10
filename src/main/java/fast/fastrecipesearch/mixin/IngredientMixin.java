@@ -31,12 +31,12 @@ public abstract class IngredientMixin {
             if (values.length == 1) {
                 Ingredient.Value value = values[0];
                 if (value instanceof Ingredient.TagValue tagValue) {
-                    buf.writeVarInt(-2);
+                    buf.writeVarInt(-7);
                     buf.writeBoolean(true);
                     buf.writeResourceLocation(tagValue.tag.location());
                     ci.cancel();
                 } else if (value instanceof Ingredient.ItemValue itemValue) {
-                    buf.writeVarInt(-2);
+                    buf.writeVarInt(-7);
                     buf.writeBoolean(false);
                     buf.writeInt(BuiltInRegistries.ITEM.getId(itemValue.item.getItem()));
                     ci.cancel();
@@ -49,7 +49,7 @@ public abstract class IngredientMixin {
     private static void fromNetwork(FriendlyByteBuf buffer, CallbackInfoReturnable<Ingredient> cir) {
         buffer.markReaderIndex();
         int size = buffer.readVarInt();
-        if (size == -2) {
+        if (size == -7) {
             if (buffer.readBoolean()) {
                 var tag = TagKey.create(Registries.ITEM, buffer.readResourceLocation());
                 cir.setReturnValue(Ingredient.of(tag));

@@ -4,7 +4,6 @@ import com.fast.recipesearch.AbstractContainerRecipeDB;
 import com.fast.recipesearch.AbstractRecipeDB;
 import com.fast.recipesearch.IntLongMap;
 import com.google.common.base.Stopwatch;
-import it.unimi.dsi.fastutil.Function;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
@@ -19,11 +18,11 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.ObjIntConsumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContainerRecipeDB<RecipeHolder<C, T>> {
@@ -50,38 +49,34 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                return findAnyMatch(map, map.toIntArray(), getFunction(map, inv, world));
+                return findAnyMatch(map, map.toIntArray(), getPredicate(map, inv, world));
             }
         }
-        return findInSerial(this.serialRecipes, r -> r.recipe.matches(inv, world) ? r : null);
+        return findInSerial(this.serialRecipes, getPredicate(inv, world));
     }
 
     List<T> getAll(C inv, Level world) {
-        var list = new ArrayList<RecipeHolder<C, T>>();
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                search(map, map.toIntArray(), getFunction(map, inv, world)).forEach(list::add);
-                return list.stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
+                return search(map, map.toIntArray(), getPredicate(map, inv, world)).stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
             }
         }
-        searchFallback(r -> r.recipe.matches(inv, world) ? r : null).forEach(list::add);
-        return list.stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
+        return serialRecipes.stream().filter(getPredicate(inv, world)).map(r -> r.recipe).collect(Collectors.toList());
     }
 
-    private Function<RecipeHolder<C, T>, RecipeHolder<C, T>> getFunction(IntLongMap map, C inv, Level world) {
+    private Predicate<RecipeHolder<C, T>> getPredicate(IntLongMap map, C inv, Level world) {
         if (maxInputAmount > 1) {
-            return o -> {
-                var r = (RecipeHolder<C, T>) o;
-                var c = getRecipeContainer(r);
-                if ((c == null || c.match(map)) && r.recipe.matches(inv, world)) return r;
-                return null;
+            return r -> {
+                var c = r.container;
+                return (c == null || c.match(map)) && r.recipe.matches(inv, world);
             };
         }
-        return o -> {
-            var r = (RecipeHolder<C, T>) o;
-            return r.recipe.matches(inv, world) ? r : null;
-        };
+        return getPredicate(inv, world);
+    }
+
+    private Predicate<RecipeHolder<C, T>> getPredicate(C inv, Level world) {
+        return r -> r.recipe.matches(inv, world);
     }
 
     private IntLongMap extractIntMap(C inv) {
@@ -104,6 +99,8 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         super.build(branchBuilder);
         rawHash.forEach((k, v) -> hash.put(k, v.toIntArray()));
         rawHash = null;
+        if (serialRecipes.isEmpty()) return;
+        serialRecipes.sort(COMPARATOR);
     }
 
     @Override

@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    jarJar(implementation("dev:RecipeSearch:1.1"))
+    jarJar(implementation("dev:RecipeSearch:1.2"))
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 
     modImplementation("dev.shadowsoffire:Placebo:${project.minecraft_version}-8.6.2")
