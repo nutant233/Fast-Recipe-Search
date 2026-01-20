@@ -1,20 +1,29 @@
 package fast.fastrecipesearch.mixin;
 
+import fast.fastrecipesearch.Fastrecipesearch;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = Ingredient.class, priority = 100)
 public abstract class IngredientMixin {
+
+    @Unique
+    private static final ResourceLocation fastrecipesearch$A = new ResourceLocation(Fastrecipesearch.MODID, "a");
+    @Unique
+    private static final ResourceLocation fastrecipesearch$B = new ResourceLocation(Fastrecipesearch.MODID, "a");
 
     @Shadow
     @Final
@@ -31,13 +40,13 @@ public abstract class IngredientMixin {
             if (values.length == 1) {
                 Ingredient.Value value = values[0];
                 if (value instanceof Ingredient.TagValue tagValue) {
-                    buf.writeVarInt(-7);
-                    buf.writeBoolean(true);
+                    buf.writeVarInt(-1);
+                    buf.writeResourceLocation(fastrecipesearch$A);
                     buf.writeResourceLocation(tagValue.tag.location());
                     ci.cancel();
                 } else if (value instanceof Ingredient.ItemValue itemValue) {
-                    buf.writeVarInt(-7);
-                    buf.writeBoolean(false);
+                    buf.writeVarInt(-1);
+                    buf.writeResourceLocation(fastrecipesearch$B);
                     buf.writeInt(BuiltInRegistries.ITEM.getId(itemValue.item.getItem()));
                     ci.cancel();
                 }
@@ -45,20 +54,13 @@ public abstract class IngredientMixin {
         }
     }
 
-    @Inject(method = "fromNetwork", at = @At(value = "HEAD"), cancellable = true)
-    private static void fromNetwork(FriendlyByteBuf buffer, CallbackInfoReturnable<Ingredient> cir) {
-        buffer.markReaderIndex();
-        int size = buffer.readVarInt();
-        if (size == -7) {
-            if (buffer.readBoolean()) {
-                var tag = TagKey.create(Registries.ITEM, buffer.readResourceLocation());
-                cir.setReturnValue(Ingredient.of(tag));
-            } else {
-                var item = BuiltInRegistries.ITEM.byId(buffer.readInt());
-                cir.setReturnValue(Ingredient.of(item));
-            }
-        } else {
-            buffer.resetReaderIndex();
+    @Redirect(method = "fromNetwork", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/common/crafting/CraftingHelper;getIngredient(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/network/FriendlyByteBuf;)Lnet/minecraft/world/item/crafting/Ingredient;", remap = false))
+    private static Ingredient fromNetwork(ResourceLocation type, FriendlyByteBuf buffer) {
+        if (type.equals(fastrecipesearch$A)) {
+            return Ingredient.of(TagKey.create(Registries.ITEM, buffer.readResourceLocation()));
+        } else if (type.equals(fastrecipesearch$B)) {
+            return Ingredient.of(BuiltInRegistries.ITEM.byId(buffer.readInt()));
         }
+        return CraftingHelper.getIngredient(type, buffer);
     }
 }
