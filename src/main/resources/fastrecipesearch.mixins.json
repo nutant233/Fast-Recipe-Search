@@ -3,10 +3,14 @@
   "minVersion": "0.8",
   "package": "fast.fastrecipesearch.mixin",
   "refmap": "fastrecipesearch.refmap.json",
+  "plugin": "fast.fastrecipesearch.Config",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "IngredientMixin",
-    "ServerResourcesMixin"
+    "ServerResourcesMixin",
+    "deduplicator.ItemMixin",
+    "deduplicator.TagKeyMixin",
+    "deduplicator.VanillaIngredientSerializerMixin",
+    "sync.IngredientMixin"
   ],
   "injectors": {
     "defaultRequire": 1,

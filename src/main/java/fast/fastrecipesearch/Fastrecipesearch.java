@@ -5,23 +5,21 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.crafting.PartialNBTIngredient;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
 
-@Mod(Fastrecipesearch.MODID)
+@Mod(Config.MODID)
 public class Fastrecipesearch {
 
     public static boolean DEBUG = false;
-    public static final String MODID = "fastrecipesearch";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
 
@@ -50,5 +48,6 @@ public class Fastrecipesearch {
             }
         });
         polymorph = FMLLoader.getLoadingModList().getModFileById("polymorph") != null;
+        DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> Client::new);
     }
 }

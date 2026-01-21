@@ -41,7 +41,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         Stopwatch watch = Stopwatch.createStarted();
         var db = AbstractRecipeDB.create(rs.entrySet().stream().map(e -> new RecipeHolder<>(e.getKey(), e.getValue())).toList(), RecipeDB::new);
         watch.stop();
-        Fastrecipesearch.LOGGER.info("Constructed recipe list for {} in {}. {}/{} recipes in the tree.", BuiltInRegistries.RECIPE_TYPE.getKey(type), watch, rs.size() - db.serialRecipes.size(), rs.size());
+        Config.LOGGER.info("Constructed recipe list for {} in {}. {}/{} recipes in the tree.", BuiltInRegistries.RECIPE_TYPE.getKey(type), watch, rs.size() - db.serialRecipes.size(), rs.size());
         return db;
     }
 

@@ -48,12 +48,12 @@ public class FastSuiteTest {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public void test(ServerStartedEvent e) {
-        Fastrecipesearch.LOGGER.info("FastSuite Debug Recipe Counts:");
+        Config.LOGGER.info("FastSuite Debug Recipe Counts:");
         for (RecipeType type : ForgeRegistries.RECIPE_TYPES.getValues()) {
-            Fastrecipesearch.LOGGER.info("{}: {}", ForgeRegistries.RECIPE_TYPES.getKey(type), e.getServer().getRecipeManager().getAllRecipesFor(type).size());
+            Config.LOGGER.info("{}: {}", ForgeRegistries.RECIPE_TYPES.getKey(type), e.getServer().getRecipeManager().getAllRecipesFor(type).size());
         }
 
-        Fastrecipesearch.LOGGER.info("Initiating FastSuite Tests...");
+        Config.LOGGER.info("Initiating FastSuite Tests...");
         RecipeManager mgr = (RecipeManager) e.getServer().getRecipeManager();
         CraftingContainer inv = new TransientCraftingContainer(new TestMenu(), 2, 2);
         Level world = e.getServer().getLevel(Level.OVERWORLD);
@@ -101,7 +101,7 @@ public class FastSuiteTest {
             time2 = System.nanoTime();
             deltaSum += time2 - time;
         }
-        Fastrecipesearch.LOGGER.info("[Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
+        Config.LOGGER.info("[Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
     }
 
     private void testDefault(RecipeManager mgr, Level level, CraftingContainer input, String recipeName) {
@@ -114,7 +114,7 @@ public class FastSuiteTest {
             time2 = System.nanoTime();
             deltaSum += time2 - time;
         }
-        Fastrecipesearch.LOGGER.info("[Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
+        Config.LOGGER.info("[Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
     }
 
 }
