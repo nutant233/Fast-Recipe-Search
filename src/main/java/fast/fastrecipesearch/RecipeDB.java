@@ -1,8 +1,8 @@
 package fast.fastrecipesearch;
 
-import com.fast.recipesearch.AbstractContainerRecipeDB;
 import com.fast.recipesearch.AbstractRecipeDB;
 import com.fast.recipesearch.IntLongMap;
+import com.fast.recipesearch.IntMapContainer;
 import com.google.common.base.Stopwatch;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -25,7 +25,7 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContainerRecipeDB<RecipeHolder<C, T>> {
+class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeDB<RecipeHolder<C, T>> {
 
     private static final Comparator<RecipeHolder<?, ?>> COMPARATOR = Comparator.comparing(r -> r.id);
 
@@ -33,8 +33,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
     private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
     private final Reference2ReferenceMap<Item, int[]> hash = new Reference2ReferenceOpenHashMap<>();
 
-    private RecipeDB(List<Runnable> branchBuilder) {
-        super(branchBuilder);
+    private RecipeDB() {
     }
 
     static <C extends Container, T extends Recipe<C>> RecipeDB<C, T> create(RecipeType<?> type, Map<ResourceLocation, T> rs) {
@@ -95,8 +94,8 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
     }
 
     @Override
-    public void build(List<Runnable> branchBuilder) {
-        super.build(branchBuilder);
+    public void finishBuild() {
+        super.finishBuild();
         rawHash.forEach((k, v) -> hash.put(k, v.toIntArray()));
         rawHash = null;
         if (serialRecipes.isEmpty()) return;
@@ -134,7 +133,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
                     }
                 }
             } else {
-                var action = Fastrecipesearch.CUSTOM.get(ingredient.getClass());
+                var action = Fastrecipesearch.getCustomIngredientAction(ingredient.getClass());
                 if (action != null) {
                     var set = new IntOpenHashSet();
                     ObjIntConsumer<Item> consumer = (item, hash) -> {
@@ -149,5 +148,10 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractContain
         }
         maxInputAmount = Math.max(maxInputAmount, inputAmount);
         return map;
+    }
+
+    @Override
+    protected void setRecipeContainer(RecipeHolder<C, T> ctRecipeHolder, IntMapContainer intMapContainer) {
+        ctRecipeHolder.container = intMapContainer;
     }
 }

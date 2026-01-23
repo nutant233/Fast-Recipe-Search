@@ -21,17 +21,21 @@ public class Fastrecipesearch {
 
     public static boolean DEBUG = false;
 
-    static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
+    private static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
 
     static final boolean polymorph;
 
-    public static <T extends Ingredient> void registerCustom(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
+    public static BiConsumer<Ingredient, ObjIntConsumer<Item>> getCustomIngredientAction(Class<?> clazz) {
+        return CUSTOM.get(clazz);
+    }
+
+    public static <T extends Ingredient> void registerCustomIngredientAction(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
         CUSTOM.put(clazz, consumer);
     }
 
     static {
         if (DEBUG) new FastSuiteTest();
-        registerCustom(PartialNBTIngredient.class, (i, consumer) -> {
+        registerCustomIngredientAction(PartialNBTIngredient.class, (i, consumer) -> {
             if (i.values.length == 1 && i.values[0] instanceof Ingredient.ItemValue itemValue) {
                 var item = itemValue.item.getItem();
                 if (item != Items.AIR) {
@@ -39,7 +43,7 @@ public class Fastrecipesearch {
                 }
             }
         });
-        registerCustom(StrictNBTIngredient.class, (i, consumer) -> {
+        registerCustomIngredientAction(StrictNBTIngredient.class, (i, consumer) -> {
             if (i.values.length == 1 && i.values[0] instanceof Ingredient.ItemValue itemValue) {
                 var item = itemValue.item.getItem();
                 if (item != Items.AIR) {

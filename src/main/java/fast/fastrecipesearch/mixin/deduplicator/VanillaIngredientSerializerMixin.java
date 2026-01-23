@@ -30,7 +30,7 @@ public class VanillaIngredientSerializerMixin {
         }
         var tag = json.get("tag");
         if (tag != null) {
-            ResourceLocation resourcelocation = new ResourceLocation(tag.getAsString());
+            ResourceLocation resourcelocation = ResourceLocation.parse(tag.getAsString());
             Object tagkey = TagKey.create(Registries.ITEM, resourcelocation);
             return ((IIngredientHolder) tagkey).fastrecipesearch$getIngredient();
         } else {
