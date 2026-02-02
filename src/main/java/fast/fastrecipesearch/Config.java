@@ -18,6 +18,7 @@ public class Config implements IMixinConfigPlugin {
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     public static final boolean isEnable;
+    public static final boolean optimize_only_vanilla;
     public static final boolean ingredient_sync;
     public static final boolean ingredient_deduplicator;
 
@@ -25,6 +26,7 @@ public class Config implements IMixinConfigPlugin {
 
     static {
         boolean enable;
+        boolean vanilla;
         boolean sync;
         boolean deduplicator;
         File configDir = configFile.getParentFile();
@@ -36,27 +38,32 @@ public class Config implements IMixinConfigPlugin {
             try (InputStream in = new FileInputStream(configFile)) {
                 props.load(in);
                 enable = props.getProperty("enable").equalsIgnoreCase("true");
+                vanilla = props.getProperty("optimize_only_vanilla").equalsIgnoreCase("true");
                 sync = props.getProperty("ingredient_sync").equalsIgnoreCase("true");
                 deduplicator = props.getProperty("ingredient_deduplicator").equalsIgnoreCase("true");
             } catch (Throwable e) {
-                enable = false;
+                enable = true;
+                vanilla = true;
                 sync = false;
                 deduplicator = false;
                 set(props);
             }
         } else {
-            enable = false;
+            enable = true;
+            vanilla = true;
             sync = false;
             deduplicator = false;
             set(props);
         }
         isEnable = enable;
+        optimize_only_vanilla = vanilla;
         ingredient_sync = sync;
         ingredient_deduplicator = deduplicator;
     }
 
     private static void set(Properties props) {
-        props.setProperty("enable", "false");
+        props.setProperty("enable", "true");
+        props.setProperty("optimize_only_vanilla", "true");
         props.setProperty("ingredient_sync", "false");
         props.setProperty("ingredient_deduplicator", "false");
         try (OutputStream out = new FileOutputStream(configFile)) {
@@ -65,6 +72,9 @@ public class Config implements IMixinConfigPlugin {
                     # enable: Master switch for this mod's optimizations
                     #   When enabled, activates optimization features
                     #   When disabled, mod functions as a library without game modifications
+                    # optimize_only_vanilla: Only optimize vanilla recipes
+                    #   When enabled, only vanilla recipes are optimized
+                    #   When disabled, all recipes are optimized
                     # ingredient_deduplicator: Removes duplicate objects to significantly reduce memory usage and slightly improve loading speed
                     #   Note: May be incompatible with some mods
                     # ingredient_sync: Optimizes synchronization to improve client-side search performance

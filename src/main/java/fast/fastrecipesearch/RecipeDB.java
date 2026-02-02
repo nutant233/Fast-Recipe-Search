@@ -21,7 +21,6 @@ import net.minecraft.world.level.Level;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -38,7 +37,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
 
     static <C extends Container, T extends Recipe<C>> RecipeDB<C, T> create(RecipeType<?> type, Map<ResourceLocation, T> rs) {
         Stopwatch watch = Stopwatch.createStarted();
-        var db = AbstractRecipeDB.create(rs.entrySet().stream().map(e -> new RecipeHolder<>(e.getKey(), e.getValue())).toList(), RecipeDB::new);
+        var db = AbstractRecipeDB.build(new RecipeDB<>(), rs.entrySet().stream().map(e -> new RecipeHolder<>(e.getKey(), e.getValue())).toList());
         watch.stop();
         Config.LOGGER.info("Constructed recipe list for {} in {}. {}/{} recipes in the tree.", BuiltInRegistries.RECIPE_TYPE.getKey(type), watch, rs.size() - db.serialRecipes.size(), rs.size());
         return db;
@@ -136,11 +135,10 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
                 var action = Fastrecipesearch.getCustomIngredientAction(ingredient.getClass());
                 if (action != null) {
                     var set = new IntOpenHashSet();
-                    ObjIntConsumer<Item> consumer = (item, hash) -> {
+                    action.accept(ingredient, (item, hash) -> {
                         set.add(hash);
                         rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
-                    };
-                    action.accept(ingredient, consumer);
+                    });
                     set.forEach(i -> map.add(i, 1));
                     if (!set.isEmpty()) inputAmount++;
                 }

@@ -3,6 +3,8 @@ package fast.fastrecipesearch;
 import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Pair;
 import fast.fastrecipesearch.compat.Polymorph;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import net.minecraft.Util;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -16,9 +18,22 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManager {
+
+    private static final Set<RecipeType<?>> VANILLA_TYPES = Util.make(() -> {
+        var set = new ReferenceOpenHashSet<RecipeType<?>>();
+        set.add(RecipeType.CRAFTING);
+        set.add(RecipeType.SMELTING);
+        set.add(RecipeType.BLASTING);
+        set.add(RecipeType.SMOKING);
+        set.add(RecipeType.CAMPFIRE_COOKING);
+        set.add(RecipeType.STONECUTTING);
+        set.add(RecipeType.SMITHING);
+        return set;
+    });
 
     private final Map<RecipeType<?>, RecipeDB<?, ?>> cachedDBMap = new ConcurrentHashMap<>();
 
@@ -44,6 +59,9 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends Container, T extends Recipe<C>> Optional<T> getRecipeFor(RecipeType<T> type, C input, Level world) {
+        if (Config.optimize_only_vanilla && !VANILLA_TYPES.contains(type)) {
+            return super.getRecipeFor(type, input, world);
+        }
         if (Fastrecipesearch.polymorph && input instanceof BlockEntity blockEntity) {
             var recipe = Polymorph.getBlockEntityRecipe(type, input, world, blockEntity);
             if (recipe != null) return Optional.of(recipe);
@@ -56,6 +74,9 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends Container, T extends Recipe<C>> Optional<Pair<ResourceLocation, T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable ResourceLocation lastRecipe) {
+        if (Config.optimize_only_vanilla && !VANILLA_TYPES.contains(type)) {
+            return super.getRecipeFor(type, input, world, lastRecipe);
+        }
         if (Fastrecipesearch.polymorph && input instanceof BlockEntity blockEntity) {
             var recipe = Polymorph.getBlockEntityRecipe(type, input, world, blockEntity);
             if (recipe != null) return Optional.of(Pair.of(recipe.getId(), recipe));
@@ -76,6 +97,9 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends Container, T extends Recipe<C>> List<T> getRecipesFor(RecipeType<T> type, C input, Level world) {
+        if (Config.optimize_only_vanilla && !VANILLA_TYPES.contains(type)) {
+            return super.getRecipesFor(type, input, world);
+        }
         var cachedRecipeList = getDB(type);
         return cachedRecipeList.getAll(input, world);
     }

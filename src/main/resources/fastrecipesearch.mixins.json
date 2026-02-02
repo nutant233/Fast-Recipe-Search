@@ -10,6 +10,7 @@
     "deduplicator.ItemMixin",
     "deduplicator.TagKeyMixin",
     "deduplicator.VanillaIngredientSerializerMixin",
+    "deduplicator.farmersdelight.ToolActionIngredientSerializerMixin",
     "sync.IngredientMixin"
   ],
   "injectors": {

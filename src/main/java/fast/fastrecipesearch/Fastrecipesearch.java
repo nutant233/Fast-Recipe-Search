@@ -29,7 +29,7 @@ public class Fastrecipesearch {
         return CUSTOM.get(clazz);
     }
 
-    public static <T extends Ingredient> void registerCustomIngredientAction(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
+    public synchronized static <T extends Ingredient> void registerCustomIngredientAction(Class<T> clazz, BiConsumer<T, ObjIntConsumer<Item>> consumer) {
         CUSTOM.put(clazz, consumer);
     }
 
