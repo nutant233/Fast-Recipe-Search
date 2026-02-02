@@ -56,7 +56,7 @@ repositories {
 }
 
 dependencies {
-    jarJar(implementation("dev:RecipeSearch:1.1"))
+    jarJar(implementation("dev:RecipeSearch:1.3"))
     runtimeOnly "dev.emi:emi-neoforge:1.1.10+1.21"
     runtimeOnly "curse.maven:jade-324717:5427817"
 

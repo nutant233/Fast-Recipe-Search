@@ -8,18 +8,13 @@ import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.common.crafting.BlockTagIngredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
 
-@Mod(Fastrecipesearch.MODID)
+@Mod(Config.MODID)
 public class Fastrecipesearch {
-
-    public static final String MODID = "fastrecipesearch";
-    public static final Logger LOGGER = LogManager.getLogger(MODID);
 
     static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
 

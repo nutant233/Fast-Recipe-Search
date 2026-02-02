@@ -2,9 +2,10 @@
   "required": true,
   "minVersion": "0.8",
   "package": "fast.fastrecipesearch.mixin",
+  "plugin": "fast.fastrecipesearch.Config",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "IngredientMixin",
+    "sync.IngredientMixin",
     "RecipeEntryMixin",
     "ServerResourcesMixin"
   ],
