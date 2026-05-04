@@ -19,16 +19,12 @@ public class Config implements IMixinConfigPlugin {
 
     public static final boolean isEnable;
     public static final boolean optimize_only_vanilla;
-    public static final boolean ingredient_sync;
-    public static final boolean ingredient_deduplicator;
 
-    private static final File configFile = new File(FMLLoader.getGamePath().toFile(), "config/fast_recipe_search.properties");
+    private static final File configFile = new File(FMLLoader.getCurrent().getGameDir().toFile(), "config/fast_recipe_search.properties");
 
     static {
         boolean enable;
         boolean vanilla;
-        boolean sync;
-        boolean deduplicator;
         File configDir = configFile.getParentFile();
         if (!configDir.exists()) {
             configDir.mkdirs();
@@ -39,33 +35,23 @@ public class Config implements IMixinConfigPlugin {
                 props.load(in);
                 enable = props.getProperty("enable").equalsIgnoreCase("true");
                 vanilla = props.getProperty("optimize_only_vanilla").equalsIgnoreCase("true");
-                sync = props.getProperty("ingredient_sync").equalsIgnoreCase("true");
-                deduplicator = props.getProperty("ingredient_deduplicator").equalsIgnoreCase("true");
             } catch (Throwable e) {
                 enable = true;
                 vanilla = true;
-                sync = false;
-                deduplicator = false;
                 set(props);
             }
         } else {
             enable = true;
             vanilla = true;
-            sync = false;
-            deduplicator = false;
             set(props);
         }
         isEnable = enable;
         optimize_only_vanilla = vanilla;
-        ingredient_sync = sync;
-        ingredient_deduplicator = deduplicator;
     }
 
     private static void set(Properties props) {
         props.setProperty("enable", "true");
         props.setProperty("optimize_only_vanilla", "true");
-        props.setProperty("ingredient_sync", "false");
-        props.setProperty("ingredient_deduplicator", "false");
         try (OutputStream out = new FileOutputStream(configFile)) {
             String comments = """
                     # Mod Optimization Configuration
@@ -74,11 +60,7 @@ public class Config implements IMixinConfigPlugin {
                     #   When disabled, mod functions as a library without game modifications
                     # optimize_only_vanilla: Only optimize vanilla recipes
                     #   When enabled, only vanilla recipes are optimized
-                    #   When disabled, all recipes are optimized
-                    # ingredient_deduplicator: Removes duplicate objects to significantly reduce memory usage and slightly improve loading speed
-                    #   Note: May be incompatible with some mods
-                    # ingredient_sync: Optimizes synchronization to improve client-side search performance
-                    #   Note: May be incompatible with some mods""";
+                    #   When disabled, all recipes are optimized""";
             props.store(out, comments);
         } catch (IOException ignored) {
         }
@@ -96,19 +78,7 @@ public class Config implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (isEnable) {
-            if (!ingredient_sync && mixinClassName.equals("fast.fastrecipesearch.mixin.sync.IngredientMixin")) {
-                LOGGER.info("ingredient_sync is false, disabling sync mixin");
-                return false;
-            }
-            if (!ingredient_deduplicator && mixinClassName.contains("fast.fastrecipesearch.mixin.deduplicator")) {
-                LOGGER.info("ingredient_deduplicator is false, disabling deduplicator mixin");
-                return false;
-            }
-            return true;
-        } else {
-            return false;
-        }
+        return isEnable;
     }
 
     @Override

@@ -9,22 +9,19 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecipeDB<IRecipeHolder<T>> {
+public class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecipeDB<IRecipeHolder<T>> {
     private static final Comparator<IRecipeHolder<?>> COMPARATOR = Comparator.comparing(r -> r.self().id());
 
 
@@ -35,7 +32,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecip
     private RecipeDB() {
     }
 
-    static <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> create(RecipeType<T> type, Collection<RecipeHolder<T>> rs) {
+    public static <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> create(RecipeType<T> type, Collection<RecipeHolder<T>> rs) {
         Stopwatch watch = Stopwatch.createStarted();
         var db = AbstractRecipeDB.build(new RecipeDB<>(), (Collection<IRecipeHolder<T>>) (Object) rs);
         watch.stop();
@@ -43,7 +40,7 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecip
         return db;
     }
 
-    Optional<RecipeHolder<T>> get(C inv, Level world) {
+    public Optional<RecipeHolder<T>> get(C inv, Level world) {
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
@@ -57,14 +54,14 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecip
         return Optional.empty();
     }
 
-    List<RecipeHolder<T>> getAll(C inv, Level world) {
+    public Stream<RecipeHolder<T>> getAll(C inv, Level world) {
         if (this.rootBranch != null) {
             var map = extractIntMap(inv);
             if (!map.isEmpty()) {
-                return search(map, map.toIntArray(), getPredicate(map, inv, world)).stream().sorted(COMPARATOR).map(IRecipeHolder::self).collect(Collectors.toList());
+                return search(map, map.toIntArray(), getPredicate(map, inv, world)).stream().map(IRecipeHolder::self);
             }
         }
-        return serialRecipes.stream().filter(getPredicate(inv, world)).map(IRecipeHolder::self).collect(Collectors.toList());
+        return serialRecipes.stream().filter(getPredicate(inv, world)).map(IRecipeHolder::self);
     }
 
     private Predicate<IRecipeHolder<T>> getPredicate(IntLongMap map, C inv, Level world) {
@@ -118,9 +115,10 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecip
 
     @Override
     protected IntLongMap extractIntMap(IRecipeHolder<T> recipe) {
+        if (recipe.self().value().isSpecial()) return IntLongMap.EMPTY;
         var map = new IntLongMap();
         int inputAmount = 0;
-        for (Ingredient ingredient : recipe.self().value().getIngredients()) {
+        for (Ingredient ingredient : recipe.self().value().placementInfo().ingredients()) {
             if (ingredient.isCustom()) {
                 var action = Fastrecipesearch.CUSTOM.get(ingredient.getCustomIngredient().getClass());
                 if (action != null) {
@@ -133,23 +131,20 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractRecip
                     set.forEach(i -> map.add(i, 1));
                     if (!set.isEmpty()) inputAmount++;
                 }
-            } else if (ingredient.values.length == 1) {
-                if (ingredient.values[0] instanceof Ingredient.ItemValue(ItemStack stack)) {
-                    var item = stack.getItem();
+            } else {
+                if (ingredient.values.size() == 1) {
+                    var item = ingredient.values.get(0).value();
                     if (item != Items.AIR) {
-                        var hash = BuiltInRegistries.ITEM.getKey(item).hashCode();
+                        var hash = item.hashCode();
                         map.add(hash, 1);
                         inputAmount++;
                         rawHash.computeIfAbsent(item, i -> new IntOpenHashSet()).add(hash);
                     }
-                } else if (ingredient.values[0] instanceof Ingredient.TagValue(TagKey<Item> tag)) {
-                    var o = BuiltInRegistries.ITEM.getTag(tag).orElse(null);
-                    if (o != null) {
-                        var hash = tag.location().hashCode();
-                        map.add(hash, 1);
-                        inputAmount++;
-                        o.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
-                    }
+                } else {
+                    var hash = ingredient.values.hashCode();
+                    map.add(hash, 1);
+                    inputAmount++;
+                    ingredient.values.forEach(h -> rawHash.computeIfAbsent(h.value(), i -> new IntOpenHashSet()).add(hash));
                 }
             }
         }

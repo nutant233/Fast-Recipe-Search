@@ -5,15 +5,13 @@
   "plugin": "fast.fastrecipesearch.Config",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "sync.IngredientMixin",
     "RecipeEntryMixin",
-    "ServerResourcesMixin"
+    "RecipeManagerMixin",
+    "RecipeMapMixin"
   ],
   "injectors": {
     "defaultRequire": 1,
     "maxShiftBy": 5
   },
-  "client": [
-    "ClientPacketListenerMixin"
-  ]
+  "client": []
 }
