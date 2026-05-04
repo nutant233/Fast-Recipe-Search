@@ -1,5 +1,6 @@
 package fast.fastrecipesearch.mixin;
 
+import fast.fastrecipesearch.Fastrecipesearch;
 import fast.fastrecipesearch.RecipeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -28,6 +29,8 @@ public class ClientPacketListenerMixin {
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
     private void createManager(Minecraft p_253924_, Connection p_253614_, CommonListenerCookie p_295121_, CallbackInfo ci) {
-        recipeManager = new RecipeManager(registryAccess);
+        RecipeManager recipeManager = new RecipeManager(this.registryAccess);
+        Fastrecipesearch.copyKubeJsRecipeManagerState(this.recipeManager, recipeManager);
+        this.recipeManager = recipeManager;
     }
 }

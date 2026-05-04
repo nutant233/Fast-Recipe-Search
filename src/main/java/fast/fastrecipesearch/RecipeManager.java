@@ -19,12 +19,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManager {
 
-    private static final Set<RecipeType<?>> VANILLA_TYPES = Util.make(() -> {
+    private static final ReferenceOpenHashSet<RecipeType<?>> VANILLA_TYPES = Util.make(() -> {
         var set = new ReferenceOpenHashSet<RecipeType<?>>();
         set.add(RecipeType.CRAFTING);
         set.add(RecipeType.SMELTING);
@@ -45,6 +44,12 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> p_44037_, ResourceManager p_44038_, ProfilerFiller p_44039_) {
         super.apply(p_44037_, p_44038_, p_44039_);
+        cachedDBMap.clear();
+    }
+
+    @Override
+    public void replaceRecipes(Iterable<RecipeHolder<?>> p_44025_) {
+        super.replaceRecipes(p_44025_);
         cachedDBMap.clear();
     }
 

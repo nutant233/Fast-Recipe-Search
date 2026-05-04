@@ -1,5 +1,6 @@
 package fast.fastrecipesearch.mixin;
 
+import fast.fastrecipesearch.Fastrecipesearch;
 import fast.fastrecipesearch.RecipeManager;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.RegistryAccess;
@@ -27,6 +28,8 @@ public class ServerResourcesMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(RegistryAccess.Frozen registryAccess, FeatureFlagSet enabledFeatures, Commands.CommandSelection commandSelection, int functionCompilationLevel, CallbackInfo ci) {
-        this.recipes = new RecipeManager(registryLookup);
+        RecipeManager recipeManager = new RecipeManager(this.registryLookup);
+        Fastrecipesearch.copyKubeJsRecipeManagerState(this.recipes, recipeManager);
+        this.recipes = recipeManager;
     }
 }

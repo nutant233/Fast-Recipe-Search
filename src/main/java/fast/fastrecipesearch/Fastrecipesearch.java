@@ -9,6 +9,7 @@ import net.neoforged.neoforge.common.crafting.BlockTagIngredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.ObjIntConsumer;
@@ -17,6 +18,7 @@ import java.util.function.ObjIntConsumer;
 public class Fastrecipesearch {
 
     static final Map<Class, BiConsumer> CUSTOM = new Reference2ReferenceOpenHashMap<>();
+    private static final Field KUBEJS_RESOURCES_FIELD;
 
     static final boolean polymorph;
 
@@ -39,6 +41,23 @@ public class Fastrecipesearch {
             }
         });
         polymorph = FMLLoader.getLoadingModList().getModFileById("polymorph") != null;
+        Field field;
+        try {
+            field = RecipeManager.class.getDeclaredField("kjs$resources");
+            field.setAccessible(true);
+        } catch (ReflectiveOperationException | RuntimeException reflectiveOperationException) {
+            field = null;
+        }
+        KUBEJS_RESOURCES_FIELD = field;
     }
+
+    public static void copyKubeJsRecipeManagerState(net.minecraft.world.item.crafting.RecipeManager a, RecipeManager b) {
+        if (KUBEJS_RESOURCES_FIELD == null || a == null || b == null || a == b) return;
+        try {
+            KUBEJS_RESOURCES_FIELD.set(b, KUBEJS_RESOURCES_FIELD.get(a));
+        } catch (IllegalAccessException ignored) {
+        }
+    }
+
 
 }
