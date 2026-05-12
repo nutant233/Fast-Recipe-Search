@@ -1,6 +1,22 @@
+This mod dramatically increases recipe lookup speed. Its core mechanism builds a tree index based on the hash codes of recipe ingredients, where ingredients serve as branches and recipes as nodes. When searching, it first extracts the ingredients from the container and starts matching from the root node; if a certain key does not match, it prunes that branch directly and no longer searches it, until a fully matching recipe is found. This greatly reduces the number of recipes that need to be checked. Compared to the vanilla method of comparing recipes one by one, it speeds up by more than 10 times, 和 the performance advantage becomes more significant as the total number of recipes increases.
+
+In addition, the mod's core library provides a high-performance Recipe Tree API that other mods can call. Because it does not depend on MC code, even non-MC projects can use this functionality.
+
+## Optimization scope
+Old versions only optimized the server side; the new version optimizes both the client and the server.
+
 ## Compatibility
-This mod is compatible with any mod that uses the original recipe manager for searching recipes. It is completely incompatible with Recipe Essentials (or FastSuite), as they optimize the same part of the system. According to my test results, installing this mod is sufficient—it offers better optimization and compatibility. Recipe Essentials relies on caching (which generally performs poorly), while FastSuite uses parallel processing (distributing performance consumption across multiple threads and potentially introducing compatibility issues).
-Regarding Client Crafting, there is no conflict, but it first searches on the client side and then waits for the server to send search results. Since this mod significantly optimizes search speed on the server side, Client Crafting becomes less meaningful. Additionally, this mod only optimizes the server-side portion, leaving the client-side recipe manager using the original method. This could result in a negative optimization state where the client is still searching while the server has already completed its search.
+This mod is compatible with all mods that use the vanilla recipe manager for recipe searching. It is completely incompatible with Recipe Essentials (or FastSuite) because they optimize the same module. According to my test results, installing this mod alone achieves the best effect — it provides better optimization performance while ensuring compatibility.
+
+Recipe Essentials relies on a caching mechanism (which often performs poorly), while FastSuite uses parallel processing (distributing the performance cost across multiple threads and potentially causing compatibility issues).
+
+Regarding Client Crafting, there is no conflict; that mod allows the client to search recipes locally first without modifying the recipe search mechanism, and it can be used alongside this mod.
+
+## Configuration
+Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
+
+To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). If you need better optimization, you can try turning off the "optimize_only_vanilla" option.
+
 
 ## Performance Analysis
 
