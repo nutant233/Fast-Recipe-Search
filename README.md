@@ -11,7 +11,7 @@ This mod is compatible with all mods that use the vanilla recipe manager for rec
 
 Recipe Essentials relies on a caching mechanism (which often performs poorly), while FastSuite uses parallel processing (distributing the performance cost across multiple threads and potentially causing compatibility issues).
 
-Regarding Client Crafting, there is no conflict; that mod allows the client to search recipes locally first without modifying the recipe search mechanism, and it can be used alongside this mod.
+FastFurnace, FastWorkbench, Client Crafting are compatible.
 
 ## Configuration
 Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
