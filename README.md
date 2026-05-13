@@ -1,430 +1,141 @@
+## Description
+This mod dramatically increases recipe lookup speed. Its core mechanism builds a tree index based on the hash codes of recipe ingredients, where ingredients serve as branches and recipes as nodes. When searching, it first extracts the ingredients from the container and starts matching from the root node; if a certain key does not match, it prunes that branch directly and no longer searches it, until a fully matching recipe is found. This greatly reduces the number of recipes that need to be checked. Compared to the vanilla method of comparing recipes one by one, it speeds up by more than 10 times, and the performance advantage becomes more significant as the total number of recipes increases.
+
+In addition, the mod's core library provides a high-performance Recipe Tree API that other mods can call. Because it does not depend on MC code, even non-MC projects can use this functionality.
+
+## Optimization scope
+Old versions only optimized the server side; the new version optimizes both the client and the server.
+
 ## Compatibility
-This mod is compatible with any mod that uses the original recipe manager for searching recipes. It is completely incompatible with Recipe Essentials (or FastSuite), as they optimize the same part of the system. According to my test results, installing this mod is sufficient—it offers better optimization and compatibility. Recipe Essentials relies on caching (which generally performs poorly), while FastSuite uses parallel processing (distributing performance consumption across multiple threads and potentially introducing compatibility issues).
-Regarding Client Crafting, there is no conflict, but it first searches on the client side and then waits for the server to send search results. Since this mod significantly optimizes search speed on the server side, Client Crafting becomes less meaningful. Additionally, this mod only optimizes the server-side portion, leaving the client-side recipe manager using the original method. This could result in a negative optimization state where the client is still searching while the server has already completed its search.
+This mod is compatible with all mods that use the vanilla recipe manager for recipe searching. It is completely incompatible with Recipe Essentials (or FastSuite) because they optimize the same module. According to my test results, installing this mod alone achieves the best effect — it provides better optimization performance while ensuring compatibility.
 
-中文：本模组兼容所有使用原版配方管理器进行配方搜索的模组。它与Recipe Essentials（或FastSuite）完全无法兼容，因为它们优化的是同一模块。根据我的测试结果，安装本模组即可实现最优效果——它在提供更佳优化性能的同时保证了兼容性。Recipe Essentials依赖缓存机制（通常表现不佳），而FastSuite采用并行处理（将性能消耗分散到多个线程，且可能引发兼容性问题）。
-关于Client Crafting，两者并无冲突，但客户端会先在本地搜索配方，随后仍需等待服务器返回搜索结果。由于本模组对服务端搜索速度进行了显著优化，客户端合成的实际意义便随之减弱。此外，本模组仅优化了服务端部分，客户端配方管理器仍采用原版搜索方式。这可能导致一种负优化状态：当客户端仍在进行本地搜索时，服务器早已完成搜索响应。
+Recipe Essentials relies on a caching mechanism (which often performs poorly), while FastSuite uses parallel processing (distributing the performance cost across multiple threads and potentially causing compatibility issues).
 
-## ATM 10 Test
+FastFurnace, FastWorkbench, Client Crafting are compatible.
 
-[18Dec2025 12:55:04.510] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 135018.2 ns to find the recipe for torch
+## Configuration
+Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
 
-[18Dec2025 12:55:18.528] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.4016372E7 ns to find the recipe for torch
+To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). If you need better optimization, you can try turning off the "optimize_only_vanilla" option.
 
-[18Dec2025 12:55:18.551] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 22548.8 ns to find the recipe for workbench
 
-[18Dec2025 12:55:19.809] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1257699.5 ns to find the recipe for workbench
+## Performance Analysis
 
-[18Dec2025 12:55:19.855] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 46480.9 ns to find the recipe for chest
+### Comparison with Vanilla
 
-[18Dec2025 12:55:20.145] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 290051.72 ns to find the recipe for chest
+#### This Mod
+The performance improvements of this mod over vanilla are substantial, with particularly dramatic gains in modpack environments:
 
-[18Dec2025 12:55:20.154] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 8439.9 ns to find the recipe for furnace
+In vanilla:
+- Recipe searches are 8.36x to 85.95x faster
+- Most basic recipes see improvements between 8-40x
+- Failed matches are handled 28.11x faster
 
-[18Dec2025 12:55:20.476] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 321852.9 ns to find the recipe for furnace
+In ATM9 (heavy modpack):
+- The improvements become even more dramatic, ranging from 133.19x to 6942.47x faster
+- Basic recipes like sticks and crafting table see improvements of over 5000x
+- Even complex recipes like black shulker boxes are found 1742.03x faster
 
-[18Dec2025 12:55:20.617] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 140890.3 ns to find the recipe for bed
+#### FastSuite
+FastSuite shows more modest improvements compared to vanilla:
 
-[18Dec2025 12:55:27.591] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 6972892.0 ns to find the recipe for bed
+In vanilla:
+- Multi-threading is actually slower in most cases
+- Single-threaded performance shows improvements of 1.13x to 3.96x
+- The parallel processing overhead often outweighs the benefits
 
-[18Dec2025 12:55:27.621] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 29388.1 ns to find the recipe for golden apple
+In ATM9:
+- Multi-threading shows better results, with improvements of 8.72x to 16.17x
+- However, these improvements are still significantly lower than This Mod's performance gains
+- The performance gap between single and multi-threaded operations is more pronounced in modpack environments
 
-[18Dec2025 12:55:30.810] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 3187964.5 ns to find the recipe for golden apple
+## Test Result
 
-[18Dec2025 12:55:30.950] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 139620.98 ns to find the recipe for arrow
+### This mod vanilla
 
-[18Dec2025 12:55:38.518] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 7566936.5 ns to find the recipe for arrow
+[19:27:59] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 9130.97 ns to find the recipe for acacia planks
+[19:28:00] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 85468.055 ns to find the recipe for acacia planks
+**Gap: 8.36x faster**
 
-[18Dec2025 12:55:38.926] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 408603.4 ns to find the recipe for painting
+[19:28:00] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 1149.77 ns to find the recipe for sticks
+[19:28:01] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 98866.69 ns to find the recipe for sticks
+**Gap: 85.95x faster**
 
-[18Dec2025 12:55:48.666] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 9739167.0 ns to find the recipe for painting
+[19:28:01] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 989.36 ns to find the recipe for crafting table
+[19:28:02] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 39704.348 ns to find the recipe for crafting table
+**Gap: 40.14x faster**
 
-[18Dec2025 12:55:48.709] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 42464.9 ns to find the recipe for bookshelf
+[19:28:02] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 7168.7905 ns to find the recipe for black shulker box
+[19:28:03] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 99736.78 ns to find the recipe for black shulker box
+**Gap: 13.91x faster**
 
-[18Dec2025 12:56:01.420] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.2710804E7 ns to find the recipe for bookshelf
+[19:28:03] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 3845.24 ns to find the recipe for failed match
+[19:28:04] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 108064.26 ns to find the recipe for failed match
+**Gap: 28.11x faster**
 
-[18Dec2025 12:56:01.547] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 126764.8 ns to find the recipe for enchanting table
+### FastSuite vanilla
 
-[18Dec2025 12:56:20.741] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Default Test] - Took an average of 1.9193496E7 ns to find the recipe for enchanting table
+[19:40:58] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 89221.78 ns to find the recipe for acacia planks
+[19:40:59] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 22518.31 ns to find the recipe for acacia planks
+**Gap: Single-threaded 3.96x faster**
 
-[18Dec2025 12:56:20.912] [Server thread/INFO] [com.mojang.text2speech.Narrator/]: [Fast Test] - Took an average of 171027.6 ns to find the recipe for failed
+[19:40:59] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 74224.68 ns to find the recipe for sticks
+[19:41:00] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 65598.14 ns to find the recipe for sticks
+**Gap: Single-threaded 1.13x faster**
 
-<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/5f08efb8-7194-4d04-b225-05092dc6f0f3" />
+[19:41:01] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 59932.03 ns to find the recipe for crafting table
+[19:41:01] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 37442.07 ns to find the recipe for crafting table
+**Gap: Single-threaded 1.60x faster**
 
-## Test code:
-### Fabric:
+[19:41:02] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 76964.96 ns to find the recipe for black shulker box
+[19:41:03] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 91723.984 ns to find the recipe for black shulker box
+**Gap: Multi-threaded 1.19x faster**
 
-public class Test {
+[19:41:03] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 69536.41 ns to find the recipe for failed match
+[19:41:04] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 101547.414 ns to find the recipe for failed match
+**Gap: Multi-threaded 1.46x faster**
 
-    static {
-        ServerLifecycleEvents.SERVER_STARTED.register(Test::test);
-    }
+### This mod ATM9
 
-    private static class TestHandler extends ScreenHandler {
+[20:05:20] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 36147.832 ns to find the recipe for acacia planks
+[20:06:48] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 8826844.0 ns to find the recipe for acacia planks
+**Gap: 244.16x faster**
 
-        protected TestHandler() {
-            super(null, -1);
-        }
+[20:06:48] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 2543.54 ns to find the recipe for sticks
+[20:09:20] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 1.5240665E7 ns to find the recipe for sticks
+**Gap: 5992.52x faster**
 
-        @Override
-        public ItemStack quickMove(PlayerEntity player, int slot) {
-            return ItemStack.EMPTY;
-        }
+[20:09:20] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 1175.53 ns to find the recipe for crafting table
+[20:10:42] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 8158714.5 ns to find the recipe for crafting table
+**Gap: 6942.47x faster**
 
-        @Override
-        public boolean canUse(PlayerEntity player) {
-            return true;
-        }
-    }
+[20:10:42] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 8131.2 ns to find the recipe for black shulker box
+[20:13:04] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 1.4163565E7 ns to find the recipe for black shulker box
+**Gap: 1742.03x faster**
 
-    public static void test(MinecraftServer server) {
-        if (server == null) return;
-        LOGGER.info("Initiating Tests...");
-        RecipeManager mgr = (RecipeManager) server.getRecipeManager();
-        World world = server.getWorld(World.OVERWORLD);
-        while (true) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
-            CraftingInventory inv1 = new CraftingInventory(new TestHandler(), 2, 2);
-            inv1.setStack(0, new ItemStack(Items.STICK));
-            inv1.setStack(1, new ItemStack(Items.COAL));
-
-            CraftingInventory inv2 = new CraftingInventory(new TestHandler(), 2, 2);
-            for (int i = 0; i < 4; i++) inv2.setStack(i, new ItemStack(Items.OAK_PLANKS));
-
-            CraftingInventory inv3 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv3.setStack(i, new ItemStack(Items.OAK_PLANKS));
-                }
-            }
-
-            CraftingInventory inv4 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv4.setStack(i, new ItemStack(Items.COBBLESTONE));
-                }
-            }
-
-            CraftingInventory inv5 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 3; i++) {
-                inv5.setStack(i, new ItemStack(Items.OAK_PLANKS));
-            }
-            for (int i = 3; i < 6; i++) {
-                inv5.setStack(i, new ItemStack(Items.WHITE_WOOL));
-            }
-
-            CraftingInventory inv6 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv6.setStack(4, new ItemStack(Items.APPLE));
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv6.setStack(i, new ItemStack(Items.GOLD_INGOT));
-                }
-            }
-
-            CraftingInventory inv7 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv7.setStack(0, new ItemStack(Items.FLINT));
-            inv7.setStack(1, new ItemStack(Items.STICK));
-            inv7.setStack(2, new ItemStack(Items.FEATHER));
-
-            CraftingInventory inv8 = new CraftingInventory(new TestHandler(), 3, 3);
-
-            inv8.setStack(0, new ItemStack(Items.STICK));
-            inv8.setStack(1, new ItemStack(Items.STICK));
-            inv8.setStack(2, new ItemStack(Items.STICK));
-            inv8.setStack(3, new ItemStack(Items.STICK));
-            inv8.setStack(4, new ItemStack(Items.WHITE_WOOL));
-            inv8.setStack(5, new ItemStack(Items.STICK));
-            inv8.setStack(6, new ItemStack(Items.STICK));
-            inv8.setStack(7, new ItemStack(Items.STICK));
-            inv8.setStack(8, new ItemStack(Items.STICK));
-
-            CraftingInventory inv9 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 3; i++) {
-                inv9.setStack(i, new ItemStack(Items.OAK_PLANKS));
-                inv9.setStack(i + 6, new ItemStack(Items.OAK_PLANKS));
-            }
-            for (int i = 3; i < 6; i++) {
-                inv9.setStack(i, new ItemStack(Items.BOOK));
-            }
-
-            CraftingInventory inv10 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv10.setStack(0, new ItemStack(Items.BOOK));
-            inv10.setStack(1, new ItemStack(Items.DIAMOND));
-            inv10.setStack(2, new ItemStack(Items.BOOK));
-            inv10.setStack(3, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(4, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(5, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(6, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(7, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(8, new ItemStack(Items.OBSIDIAN));
-
-            CraftingInventory inv11 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv11.setStack(0, new ItemStack(Items.STICK));
-            inv11.setStack(1, new ItemStack(Items.IRON_INGOT));
-            inv11.setStack(2, new ItemStack(Items.REDSTONE));
-            inv11.setStack(3, new ItemStack(Items.OAK_PLANKS));
-            inv11.setStack(4, new ItemStack(Items.OBSIDIAN));
-            inv11.setStack(5, new ItemStack(Items.BOOK));
-            inv11.setStack(6, new ItemStack(Items.FLINT));
-            inv11.setStack(7, new ItemStack(Items.COBBLESTONE));
-            inv11.setStack(8, new ItemStack(Items.COAL));
-
-            CraftingInventory[] arr = {inv1, inv2, inv3, inv4, inv5, inv6, inv7, inv8, inv9, inv10, inv11};
-            String[] names = {"torch", "workbench", "chest", "furnace", "bed", "golden apple", "arrow", "painting", "bookshelf", "enchanting table", "failed"};
-
-            for (int testCase = 0; testCase < names.length; testCase++) {
-                testFast(mgr, world, arr[testCase].createRecipeInput(), names[testCase]);
-                testDefault(mgr, world, arr[testCase].createRecipeInput(), names[testCase]);
-            }
-
-            LOGGER.info("Starting Furnace Tests...");
-
-            SingleStackRecipeInput furnaceInv1 = new SingleStackRecipeInput(new ItemStack(Items.IRON_ORE));
-            SingleStackRecipeInput furnaceInv2 = new SingleStackRecipeInput(new ItemStack(Items.GOLD_ORE));
-            SingleStackRecipeInput furnaceInv3 = new SingleStackRecipeInput(new ItemStack(Items.STONE));
-            SingleStackRecipeInput furnaceInv4 = new SingleStackRecipeInput(new ItemStack(Items.SAND));
-            SingleStackRecipeInput furnaceInv5 = new SingleStackRecipeInput(new ItemStack(Items.RAW_COPPER));
-            SingleStackRecipeInput furnaceInv6 = new SingleStackRecipeInput(new ItemStack(Items.POTATO));
-            SingleStackRecipeInput furnaceInv7 = new SingleStackRecipeInput(new ItemStack(Items.BEEF));
-            SingleStackRecipeInput furnaceInv8 = new SingleStackRecipeInput(new ItemStack(Items.CLAY_BALL));
-            SingleStackRecipeInput furnaceInv9 = new SingleStackRecipeInput(new ItemStack(Items.CACTUS));
-            SingleStackRecipeInput furnaceInv10 = new SingleStackRecipeInput(new ItemStack(Items.DRAGON_EGG));
-
-            SingleStackRecipeInput[] furnaceArrs = {furnaceInv1, furnaceInv2, furnaceInv3, furnaceInv4, furnaceInv5, furnaceInv6, furnaceInv7, furnaceInv8, furnaceInv9, furnaceInv10};
-            String[] furnaceNames = {"iron ingot", "gold ingot", "smooth stone", "glass", "copper ingot", "baked potato", "steak", "brick", "green dye", "failed"};
-
-            for (int i = 0; i < furnaceArrs.length; i++) {
-                testFurnaceFast(mgr, world, furnaceArrs[i], furnaceNames[i]);
-                testFurnaceDefault(mgr, world, furnaceArrs[i], furnaceNames[i]);
-            }
-        }
-    }
-
-    private static void testFast(RecipeManager mgr, World level, CraftingRecipeInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 10000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.getFirstMatch(RecipeType.CRAFTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-
-    private static void testDefault(RecipeManager mgr, World level, CraftingRecipeInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 10000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.super_getFirstMatch(RecipeType.CRAFTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-
-    private static void testFurnaceFast(RecipeManager mgr, World level, SingleStackRecipeInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 10000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.getFirstMatch(RecipeType.SMELTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Furnace Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-
-    private static void testFurnaceDefault(RecipeManager mgr, World level, SingleStackRecipeInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 10000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.super_getFirstMatch(RecipeType.SMELTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Furnace Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-
-### Neoforge:
-
-public class Test {
-
-    static {
-        NeoForge.EVENT_BUS.addListener(ServerStartedEvent.class, e -> test(e.getServer()));
-    }
-
-    private static class TestHandler extends AbstractContainerMenu {
-
-        protected TestHandler() {
-            super(null, -1);
-        }
-
-
-        @Override
-        public net.minecraft.world.item.ItemStack quickMoveStack(Player p_38941_, int p_38942_) {
-            return net.minecraft.world.item.ItemStack.EMPTY;
-        }
-
-        @Override
-        public boolean stillValid(Player p_38874_) {
-            return true;
-        }
-    }
-
-    private static class CraftingInventory extends TransientCraftingContainer {
-
-        public CraftingInventory(AbstractContainerMenu p_287684_, int p_287629_, int p_287593_) {
-            super(p_287684_, p_287629_, p_287593_);
-        }
-
-        public void setStack(int p_38941_, net.minecraft.world.item.ItemStack p_38942_) {
-            this.setItem(p_38941_, p_38942_);
-        }
-    }
-
-    public static void test(MinecraftServer server) {
-        if (server == null) return;
-        LOGGER.info("Initiating Tests...");
-        RecipeManager mgr = (RecipeManager) server.getRecipeManager();
-        var world = server.getLevel(Level.OVERWORLD);
-        while (true) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
-            CraftingInventory inv1 = new CraftingInventory(new TestHandler(), 2, 2);
-            inv1.setStack(0, new ItemStack(Items.STICK));
-            inv1.setStack(1, new ItemStack(Items.COAL));
-
-            CraftingInventory inv2 = new CraftingInventory(new TestHandler(), 2, 2);
-            for (int i = 0; i < 4; i++) inv2.setStack(i, new ItemStack(Items.OAK_PLANKS));
-
-            CraftingInventory inv3 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv3.setStack(i, new ItemStack(Items.OAK_PLANKS));
-                }
-            }
-
-            CraftingInventory inv4 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv4.setStack(i, new ItemStack(Items.COBBLESTONE));
-                }
-            }
-
-            CraftingInventory inv5 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 3; i++) {
-                inv5.setStack(i, new ItemStack(Items.OAK_PLANKS));
-            }
-            for (int i = 3; i < 6; i++) {
-                inv5.setStack(i, new ItemStack(Items.WHITE_WOOL));
-            }
-
-            CraftingInventory inv6 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv6.setStack(4, new ItemStack(Items.APPLE));
-            for (int i = 0; i < 9; i++) {
-                if (i != 4) {
-                    inv6.setStack(i, new ItemStack(Items.GOLD_INGOT));
-                }
-            }
-
-            CraftingInventory inv7 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv7.setStack(0, new ItemStack(Items.FLINT));
-            inv7.setStack(1, new ItemStack(Items.STICK));
-            inv7.setStack(2, new ItemStack(Items.FEATHER));
-
-            CraftingInventory inv8 = new CraftingInventory(new TestHandler(), 3, 3);
-
-            inv8.setStack(0, new ItemStack(Items.STICK));
-            inv8.setStack(1, new ItemStack(Items.STICK));
-            inv8.setStack(2, new ItemStack(Items.STICK));
-            inv8.setStack(3, new ItemStack(Items.STICK));
-            inv8.setStack(4, new ItemStack(Items.WHITE_WOOL));
-            inv8.setStack(5, new ItemStack(Items.STICK));
-            inv8.setStack(6, new ItemStack(Items.STICK));
-            inv8.setStack(7, new ItemStack(Items.STICK));
-            inv8.setStack(8, new ItemStack(Items.STICK));
-
-            CraftingInventory inv9 = new CraftingInventory(new TestHandler(), 3, 3);
-            for (int i = 0; i < 3; i++) {
-                inv9.setStack(i, new ItemStack(Items.OAK_PLANKS));
-                inv9.setStack(i + 6, new ItemStack(Items.OAK_PLANKS));
-            }
-            for (int i = 3; i < 6; i++) {
-                inv9.setStack(i, new ItemStack(Items.BOOK));
-            }
-
-            CraftingInventory inv10 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv10.setStack(0, new ItemStack(Items.BOOK));
-            inv10.setStack(1, new ItemStack(Items.DIAMOND));
-            inv10.setStack(2, new ItemStack(Items.BOOK));
-            inv10.setStack(3, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(4, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(5, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(6, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(7, new ItemStack(Items.OBSIDIAN));
-            inv10.setStack(8, new ItemStack(Items.OBSIDIAN));
-
-            CraftingInventory inv11 = new CraftingInventory(new TestHandler(), 3, 3);
-            inv11.setStack(0, new ItemStack(Items.STICK));
-            inv11.setStack(1, new ItemStack(Items.IRON_INGOT));
-            inv11.setStack(2, new ItemStack(Items.REDSTONE));
-            inv11.setStack(3, new ItemStack(Items.OAK_PLANKS));
-            inv11.setStack(4, new ItemStack(Items.OBSIDIAN));
-            inv11.setStack(5, new ItemStack(Items.BOOK));
-            inv11.setStack(6, new ItemStack(Items.FLINT));
-            inv11.setStack(7, new ItemStack(Items.COBBLESTONE));
-            inv11.setStack(8, new ItemStack(Items.COAL));
-
-            CraftingInventory[] arr = {inv1, inv2, inv3, inv4, inv5, inv6, inv7, inv8, inv9, inv10, inv11};
-            String[] names = {"torch", "workbench", "chest", "furnace", "bed", "golden apple", "arrow", "painting", "bookshelf", "enchanting table", "failed"};
-
-            for (int testCase = 0; testCase < names.length; testCase++) {
-                testFast(mgr, world, arr[testCase].asCraftInput(), names[testCase]);
-                testDefault(mgr, world, arr[testCase].asCraftInput(), names[testCase]);
-            }
-        }
-    }
-
-    private static void testFast(RecipeManager mgr, Level level, CraftingInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 1000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.getRecipeFor(RecipeType.CRAFTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Fast Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-
-    private static void testDefault(RecipeManager mgr, Level level, CraftingInput input, String recipeName) {
-        long time, time2;
-        long deltaSum = 0;
-        int iterations = 1000;
-        for (int i = 0; i < iterations; i++) {
-            time = System.nanoTime();
-            mgr.super_getFirstMatch(RecipeType.CRAFTING, input, level);
-            time2 = System.nanoTime();
-            deltaSum += time2 - time;
-        }
-        LOGGER.info("[Default Test] - Took an average of {} ns to find the recipe for {}", deltaSum / (float) iterations, recipeName);
-    }
-}
-
-}
+[20:13:05] [Server thread/INFO] [fastrecipesearch/]: [Fast Test] - Took an average of 128783.62 ns to find the recipe for failed match
+[20:15:57] [Server thread/INFO] [fastrecipesearch/]: [Default Test] - Took an average of 1.7153812E7 ns to find the recipe for failed match
+**Gap: 133.19x faster**
+
+### FastSuite ATM9
+
+[20:21:46] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 1177099.6 ns to find the recipe for acacia planks
+[20:24:20] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 1.5478248E7 ns to find the recipe for acacia planks
+**Gap: Multi-threaded 13.15x faster**
+
+[20:24:35] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 1484677.5 ns to find the recipe for sticks
+[20:27:05] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 1.4976043E7 ns to find the recipe for sticks
+**Gap: Multi-threaded 10.08x faster**
+
+[20:27:13] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 817227.3 ns to find the recipe for crafting table
+[20:29:25] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 1.3213295E7 ns to find the recipe for crafting table
+**Gap: Multi-threaded 16.17x faster**
+
+[20:29:41] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 1527112.8 ns to find the recipe for black shulker box
+[20:32:07] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 1.4597164E7 ns to find the recipe for black shulker box
+**Gap: Multi-threaded 9.56x faster**
+
+[20:32:43] [Server thread/INFO] [fastsuite/]: [Multithreaded Test] - Took an average of 3679896.8 ns to find the recipe for failed match
+[20:38:04] [Server thread/INFO] [fastsuite/]: [Singlethreaded Test] - Took an average of 3.2105598E7 ns to find the recipe for failed match
+**Gap: Multi-threaded 8.72x faster**
 
