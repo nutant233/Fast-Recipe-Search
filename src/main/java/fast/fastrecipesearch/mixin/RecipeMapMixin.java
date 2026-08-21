@@ -1,8 +1,8 @@
 package fast.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.Config;
 import fast.fastrecipesearch.IRecipeMap;
 import fast.fastrecipesearch.RecipeDB;
+import fast.fastrecipesearch.RecipeTypeFilter;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
@@ -30,7 +30,7 @@ public abstract class RecipeMapMixin implements IRecipeMap {
     private final Map<RecipeType<?>, RecipeDB<?, ?>> fastRecipeSearch$cachedDBMap = new ConcurrentHashMap<>();
 
     @Unique
-    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = Config.resolveMode();
+    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
 
     @Inject(method = "getRecipesFor", at = @At("HEAD"), cancellable = true)
     public <I extends RecipeInput, T extends Recipe<I>> void getRecipesFor(RecipeType<T> type, I container, Level level, CallbackInfoReturnable<Stream<RecipeHolder<T>>> cir) {

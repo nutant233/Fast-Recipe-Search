@@ -1,9 +1,5 @@
 package fast.fastrecipesearch;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,50 +90,6 @@ public class Config implements IMixinConfigPlugin {
             }
         }
         return Set.copyOf(set);
-    }
-
-    /**
-     * Resolves the configured optimize mode into the set of recipe types that take the fast path.
-     * Returns null when all recipe types are optimized.
-     */
-    public static Set<RecipeType<?>> resolveMode() {
-        return switch (optimizeMode) {
-            case ALL -> null;
-            case VANILLA -> Fastrecipesearch.VANILLA_TYPES;
-            case WHITELIST -> resolve(optimizeWhitelist);
-            case BLACKLIST -> resolveComplement(optimizeBlacklist);
-        };
-    }
-
-    private static Set<RecipeType<?>> resolve(Set<String> ids) {
-        var set = new ReferenceOpenHashSet<RecipeType<?>>();
-        for (String id : ids) {
-            var key = Identifier.tryParse(id);
-            if (key != null) {
-                var type = BuiltInRegistries.RECIPE_TYPE.getValue(key);
-                if (type != null) {
-                    set.add(type);
-                } else {
-                    LOGGER.warn("Unknown recipe type '{}' in config, ignoring", id);
-                }
-            } else {
-                LOGGER.warn("Invalid recipe type id '{}' in config, ignoring", id);
-            }
-        }
-        return set;
-    }
-
-    /** Blacklist mode: optimize every registered recipe type except the listed ones. */
-    private static Set<RecipeType<?>> resolveComplement(Set<String> blacklist) {
-        var excluded = resolve(blacklist);
-        var set = new ReferenceOpenHashSet<RecipeType<?>>();
-        for (var key : BuiltInRegistries.RECIPE_TYPE.keySet()) {
-            var type = BuiltInRegistries.RECIPE_TYPE.getValue(key);
-            if (type != null && !excluded.contains(type)) {
-                set.add(type);
-            }
-        }
-        return set;
     }
 
     private static void setDefault(Properties props) {

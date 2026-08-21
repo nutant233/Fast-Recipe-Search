@@ -1,7 +1,7 @@
 package fast.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.Config;
 import fast.fastrecipesearch.IRecipeMap;
+import fast.fastrecipesearch.RecipeTypeFilter;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +21,7 @@ public class RecipeManagerMixin {
     private RecipeMap recipes;
 
     @Unique
-    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = Config.resolveMode();
+    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
 
     @Inject(method = "getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     public <I extends RecipeInput, T extends Recipe<I>> void getRecipeFor(RecipeType<T> type, I input, Level level, CallbackInfoReturnable<Optional<RecipeHolder<T>>> cir) {
