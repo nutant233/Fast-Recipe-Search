@@ -5,6 +5,7 @@ import fast.fastrecipesearch.compat.Polymorph;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.Util;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManager {
@@ -37,8 +39,53 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     private final Map<RecipeType<?>, RecipeDB<?, ?>> cachedDBMap = new ConcurrentHashMap<>();
 
+    /** Recipe types that take the fast path, or null when all types are optimized. */
+    @Nullable
+    private final Set<RecipeType<?>> optimizedTypes;
+
     public RecipeManager(HolderLookup.Provider registries) {
         super(registries);
+        optimizedTypes = switch (Config.optimizeMode) {
+            case ALL -> null;
+            case VANILLA -> VANILLA_TYPES;
+            case WHITELIST -> resolve(Config.optimizeWhitelist);
+            case BLACKLIST -> resolveComplement(Config.optimizeBlacklist);
+        };
+    }
+
+    private boolean shouldOptimize(RecipeType<?> type) {
+        return optimizedTypes == null || optimizedTypes.contains(type);
+    }
+
+    private static Set<RecipeType<?>> resolve(Set<String> ids) {
+        var set = new ReferenceOpenHashSet<RecipeType<?>>();
+        for (String id : ids) {
+            var key = ResourceLocation.tryParse(id);
+            if (key != null) {
+                var type = BuiltInRegistries.RECIPE_TYPE.get(key);
+                if (type != null) {
+                    set.add(type);
+                } else {
+                    Config.LOGGER.warn("Unknown recipe type '{}' in config, ignoring", id);
+                }
+            } else {
+                Config.LOGGER.warn("Invalid recipe type id '{}' in config, ignoring", id);
+            }
+        }
+        return set;
+    }
+
+    /** Blacklist mode: optimize every registered recipe type except the listed ones. */
+    private static Set<RecipeType<?>> resolveComplement(Set<String> blacklist) {
+        var excluded = resolve(blacklist);
+        var set = new ReferenceOpenHashSet<RecipeType<?>>();
+        for (var key : BuiltInRegistries.RECIPE_TYPE.keySet()) {
+            var type = BuiltInRegistries.RECIPE_TYPE.get(key);
+            if (type != null && !excluded.contains(type)) {
+                set.add(type);
+            }
+        }
+        return set;
     }
 
     @Override
@@ -55,7 +102,7 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends RecipeInput, T extends Recipe<C>> @NotNull Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> type, C input, Level world, @Nullable RecipeHolder<T> lastRecipe) {
-        if (Config.optimize_only_vanilla && !VANILLA_TYPES.contains(type)) {
+        if (!shouldOptimize(type)) {
             return super.getRecipeFor(type, input, world, lastRecipe);
         }
         if (Fastrecipesearch.polymorph) {
@@ -69,7 +116,7 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @Override
     public <C extends RecipeInput, T extends Recipe<C>> @NotNull List<RecipeHolder<T>> getRecipesFor(RecipeType<T> type, C input, Level world) {
-        if (Config.optimize_only_vanilla && !VANILLA_TYPES.contains(type)) {
+        if (!shouldOptimize(type)) {
             return super.getRecipesFor(type, input, world);
         }
         var cachedRecipeList = getDB(type);
