@@ -1,8 +1,8 @@
 package fast.fastrecipesearch;
 
-import com.fast.recipesearch.AbstractRecipeDB;
-import com.fast.recipesearch.IntLongMap;
-import com.fast.recipesearch.IntMapContainer;
+import com.gto.recipesearch.AbstractRecipeDB;
+import com.gto.recipesearch.IntLongMap;
+import com.gto.recipesearch.IngredientTable;
 import com.google.common.base.Stopwatch;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeDB<RecipeHolder<C, T>> {
+ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeDB<RecipeHolder<C, T>> {
 
     private static final Comparator<RecipeHolder<?, ?>> COMPARATOR = Comparator.comparing(r -> r.id);
 
@@ -39,7 +39,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
         Stopwatch watch = Stopwatch.createStarted();
         var db = AbstractRecipeDB.build(new RecipeDB<>(), rs.entrySet().stream().map(e -> new RecipeHolder<>(e.getKey(), e.getValue())).toList());
         watch.stop();
-        Config.LOGGER.info("Constructed recipe list for {} in {}. {}/{} recipes in the tree.", BuiltInRegistries.RECIPE_TYPE.getKey(type), watch, rs.size() - db.serialRecipes.size(), rs.size());
+        Config.LOGGER.info("Constructed recipe list for {} in {}. {}/{} recipes in the tree.", BuiltInRegistries.RECIPE_TYPE.getKey(type), watch, rs.size() - db.unindexedSerial.size(), rs.size());
         return db;
     }
 
@@ -50,7 +50,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
                 return findAnyMatch(map, map.toIntArray(), getPredicate(map, inv, world));
             }
         }
-        return findInSerial(this.serialRecipes, getPredicate(inv, world));
+        return findInSerial(this.unindexedSerial, getPredicate(inv, world));
     }
 
     List<T> getAll(C inv, Level world) {
@@ -60,7 +60,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
                 return search(map, map.toIntArray(), getPredicate(map, inv, world)).stream().sorted(COMPARATOR).map(r -> r.recipe).collect(Collectors.toList());
             }
         }
-        return serialRecipes.stream().filter(getPredicate(inv, world)).map(r -> r.recipe).collect(Collectors.toList());
+        return unindexedSerial.stream().filter(getPredicate(inv, world)).map(r -> r.recipe).collect(Collectors.toList());
     }
 
     private Predicate<RecipeHolder<C, T>> getPredicate(IntLongMap map, C inv, Level world) {
@@ -97,8 +97,8 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
         super.finishBuild();
         rawHash.forEach((k, v) -> hash.put(k, v.toIntArray()));
         rawHash = null;
-        if (serialRecipes.isEmpty()) return;
-        serialRecipes.sort(COMPARATOR);
+        if (unindexedSerial.isEmpty()) return;
+        unindexedSerial.sort(COMPARATOR);
     }
 
     @Override
@@ -107,7 +107,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
     }
 
     @Override
-    protected IntLongMap extractIntMap(RecipeHolder<C, T> recipe) {
+    protected IntLongMap extractIngredientMap(RecipeHolder<C, T> recipe) {
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.recipe.getIngredients()) {
@@ -149,7 +149,7 @@ class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeD
     }
 
     @Override
-    protected void setRecipeContainer(RecipeHolder<C, T> ctRecipeHolder, IntMapContainer intMapContainer) {
-        ctRecipeHolder.container = intMapContainer;
+    protected void setIngredientTable(RecipeHolder<C, T> ctRecipeHolder, IngredientTable IngredientTable) {
+        ctRecipeHolder.container = IngredientTable;
     }
 }

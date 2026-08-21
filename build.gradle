@@ -97,10 +97,11 @@ repositories {
     maven {
         url 'https://dogforce-games.com/maven'
     }
+    maven { url = 'https://maven.gtodyssey.com/releases' }
 }
 
 dependencies {
-    jarJar(implementation("dev:RecipeSearch:1.3"))
+    jarJar(implementation 'com.gto.recipesearch:RecipeSearch:26.8.3')
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 
     modImplementation("dev.shadowsoffire:Placebo:${project.minecraft_version}-8.6.2")
