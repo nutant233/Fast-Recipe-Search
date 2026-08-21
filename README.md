@@ -13,10 +13,69 @@ Recipe Essentials relies on a caching mechanism (which often performs poorly), w
 
 FastFurnace, FastWorkbench, Client Crafting are compatible.
 
+## Usage
+
+### Requirements
+- Minecraft 1.20.1
+- Forge 47.4.9 or later
+
+### Installation
+1. Download the latest release jar (`fastrecipesearch-1.20.1-26.1-forge.jar`).
+2. Put it into your instance's `mods` folder.
+3. Start the game. No further setup is needed — the mod optimizes recipe search automatically.
+
+### How to verify it works
+The mod logs index construction for each optimized recipe type the first time a recipe of that type is searched (for example, by opening a crafting table):
+```
+[Server thread/INFO] [fastrecipesearch/]: Constructed recipe list for minecraft:crafting in 12.4 ms. 1500/1523 recipes in the tree.
+```
+If you do not see these lines, check `config/fast_recipe_search.properties` and confirm `enable=true`.
+
+### Tuning
+By default only vanilla recipe types are optimized. If you are sure a mod's recipe type is compatible (its `Container` implements `getItem`), you can switch to whitelist/blacklist mode or optimize everything — see [Configuration](#configuration).
+
+### For developers
+The bundled RecipeSearch library (`com.gto.recipesearch`) provides a high-performance recipe tree API that does not depend on Minecraft code, so it can even be used in non-MC projects.
+
+Mods with custom `Ingredient` subclasses can register a hash extractor so their ingredients can be indexed:
+```java
+Fastrecipesearch.registerCustomIngredientAction(MyIngredient.class, (ingredient, consumer) -> {
+    // For each matching item, call: consumer.accept(item, hash);
+});
+```
+
 ## Configuration
 Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
 
-To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). If you need better optimization, you can try turning off the "optimize_only_vanilla" option.
+To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). The config file is `config/fast_recipe_search.properties`:
+
+- `optimize_mode`: Controls which recipe types are optimized.
+  - `vanilla`: Only optimize vanilla recipe types (default)
+  - `all`: Optimize all recipe types
+  - `whitelist`: Only optimize the recipe types listed in `optimize_whitelist`
+  - `blacklist`: Optimize all recipe types except those listed in `optimize_blacklist`
+- `optimize_whitelist`: Comma-separated recipe type ids (e.g. `minecraft:crafting,minecraft:smelting,some_mod:custom_type`)
+- `optimize_blacklist`: Comma-separated recipe type ids
+
+For backward compatibility, the old `optimize_only_vanilla` option is still respected when `optimize_mode` is absent.
+
+Vanilla recipe type ids for reference: `minecraft:crafting`, `minecraft:smelting`, `minecraft:blasting`, `minecraft:smoking`, `minecraft:campfire_cooking`, `minecraft:stonecutting`, `minecraft:smithing`.
+
+Example — only optimize crafting and smelting:
+```properties
+optimize_mode=whitelist
+optimize_whitelist=minecraft:crafting,minecraft:smelting
+```
+
+Example — optimize everything except a problematic mod type:
+```properties
+optimize_mode=blacklist
+optimize_blacklist=some_mod:custom_type
+```
+
+To find a mod's recipe type id, temporarily set `optimize_mode=all` and restart the game, then trigger a search of that recipe type (for example, open the crafting table or the machine's GUI). The first search builds the index for that type and logs a "Constructed recipe list for <id>" line.
+
+Changes to the config file take effect after restarting the game.
 
 
 ## Performance Analysis
