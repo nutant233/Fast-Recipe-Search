@@ -1,7 +1,6 @@
 package fast.fastrecipesearch.mixin;
 
 import fast.fastrecipesearch.Config;
-import fast.fastrecipesearch.Fastrecipesearch;
 import fast.fastrecipesearch.IRecipeMap;
 import fast.fastrecipesearch.RecipeDB;
 import net.minecraft.resources.ResourceKey;
@@ -17,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -29,13 +29,15 @@ public abstract class RecipeMapMixin implements IRecipeMap {
     @Unique
     private final Map<RecipeType<?>, RecipeDB<?, ?>> fastRecipeSearch$cachedDBMap = new ConcurrentHashMap<>();
 
+    @Unique
+    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = Config.resolveMode();
+
     @Inject(method = "getRecipesFor", at = @At("HEAD"), cancellable = true)
     public <I extends RecipeInput, T extends Recipe<I>> void getRecipesFor(RecipeType<T> type, I container, Level level, CallbackInfoReturnable<Stream<RecipeHolder<T>>> cir) {
         if (container.isEmpty()) {
             cir.setReturnValue(Stream.empty());
-        } else {
-            if (Config.optimize_only_vanilla && !Fastrecipesearch.VANILLA_TYPES.contains(type)) return;
-            cir.setReturnValue(container.isEmpty() ? Stream.empty() : getDB(type).getAll(container, level));
+        } else if (fastRecipeSearch$optimizedTypes == null || fastRecipeSearch$optimizedTypes.contains(type)) {
+            cir.setReturnValue(getDB(type).getAll(container, level));
         }
     }
 

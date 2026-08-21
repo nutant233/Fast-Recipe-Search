@@ -16,7 +16,33 @@ FastFurnace, FastWorkbench, Client Crafting are compatible.
 ## Configuration
 Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
 
-To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). If you need better optimization, you can try turning off the "optimize_only_vanilla" option.
+To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). The config file is `config/fast_recipe_search.properties`:
+
+- `optimize_mode`: Controls which recipe types are optimized.
+  - `vanilla`: Only optimize vanilla recipe types (default)
+  - `all`: Optimize all recipe types
+  - `whitelist`: Only optimize the recipe types listed in `optimize_whitelist`
+  - `blacklist`: Optimize all recipe types except those listed in `optimize_blacklist`
+- `optimize_whitelist`: Comma-separated recipe type ids (e.g. `minecraft:crafting,minecraft:smelting,some_mod:custom_type`)
+- `optimize_blacklist`: Comma-separated recipe type ids
+
+For backward compatibility, the old `optimize_only_vanilla` option is still respected when `optimize_mode` is absent.
+
+Vanilla recipe type ids for reference: `minecraft:crafting`, `minecraft:smelting`, `minecraft:blasting`, `minecraft:smoking`, `minecraft:campfire_cooking`, `minecraft:stonecutting`, `minecraft:smithing`.
+
+Example — only optimize crafting and smelting:
+```properties
+optimize_mode=whitelist
+optimize_whitelist=minecraft:crafting,minecraft:smelting
+```
+
+Example — optimize everything except a problematic mod type:
+```properties
+optimize_mode=blacklist
+optimize_blacklist=some_mod:custom_type
+```
+
+Changes to the config file take effect after restarting the game.
 
 
 ## Performance Analysis
