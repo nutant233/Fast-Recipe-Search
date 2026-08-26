@@ -1,16 +1,12 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "fast.fastrecipesearch.mixin",
+  "package": "io.github.nutant.fastrecipesearch.mixin",
   "refmap": "fastrecipesearch.refmap.json",
-  "plugin": "fast.fastrecipesearch.Config",
+  "plugin": "io.github.nutant.fastrecipesearch.Config",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "ServerResourcesMixin",
-    "deduplicator.ItemMixin",
-    "deduplicator.TagKeyMixin",
-    "deduplicator.VanillaIngredientSerializerMixin",
-    "deduplicator.farmersdelight.ToolActionIngredientSerializerMixin",
     "sync.IngredientMixin"
   ],
   "injectors": {

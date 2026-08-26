@@ -1,4 +1,4 @@
-package fast.fastrecipesearch.mixin.sync;
+package io.github.nutant.fastrecipesearch.mixin.sync;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -25,18 +25,18 @@ public abstract class IngredientMixin {
     private boolean isVanilla;
 
     @Inject(method = "toNetwork", at = @At("HEAD"), cancellable = true)
-    private void toNetwork(FriendlyByteBuf buf, CallbackInfo ci) {
+    private void toNetwork(FriendlyByteBuf buffer, CallbackInfo ci) {
         if (this.isVanilla) {
             Ingredient.Value[] values = this.values;
             if (values.length == 1) {
                 Ingredient.Value value = values[0];
                 if (value instanceof Ingredient.TagValue tagValue) {
-                    buf.writeVarInt(-2);
-                    buf.writeResourceLocation(tagValue.tag.location());
+                    buffer.writeVarInt(-2);
+                    buffer.writeResourceLocation(tagValue.tag.location());
                     ci.cancel();
                 } else if (value instanceof Ingredient.ItemValue itemValue) {
-                    buf.writeVarInt(-3);
-                    buf.writeInt(BuiltInRegistries.ITEM.getId(itemValue.item.getItem()));
+                    buffer.writeVarInt(-3);
+                    buffer.writeInt(BuiltInRegistries.ITEM.getId(itemValue.item.getItem()));
                     ci.cancel();
                 }
             }

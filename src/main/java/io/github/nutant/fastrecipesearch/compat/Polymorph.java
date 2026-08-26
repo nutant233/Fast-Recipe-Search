@@ -1,4 +1,4 @@
-package fast.fastrecipesearch.compat;
+package io.github.nutant.fastrecipesearch.compat;
 
 import com.illusivesoulworks.polymorph.common.crafting.RecipeSelection;
 import net.minecraft.world.Container;

@@ -101,7 +101,7 @@ repositories {
 }
 
 dependencies {
-    jarJar(implementation 'com.gto.recipesearch:RecipeSearch:26.8.3')
+    jarJar(implementation 'com.gto.recipesearch:RecipeSearch:26.8.4')
     annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
 
     modImplementation("dev.shadowsoffire:Placebo:${project.minecraft_version}-8.6.2")
@@ -116,6 +116,11 @@ dependencies {
 
     modImplementation("vazkii.botania:Botania:${project.minecraft_version}-448-FORGE")
     modImplementation("vazkii.patchouli:Patchouli:${project.minecraft_version}-84.1-FORGE")
+
+    modImplementation("curse.maven:iguanatweaks-reborn-285690:8323729")
+    modImplementation("curse.maven:insanelib-465109:8306331")
+    modImplementation("curse.maven:max-health-fix-492246:7612769")
+    modImplementation("curse.maven:immersive-engineering-231951:6206989")
 }
 
 tasks.withType(JavaCompile).configureEach {

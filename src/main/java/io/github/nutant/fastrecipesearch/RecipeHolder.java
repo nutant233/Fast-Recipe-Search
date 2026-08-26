@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.gto.recipesearch.IngredientTable;
 import net.minecraft.resources.ResourceLocation;

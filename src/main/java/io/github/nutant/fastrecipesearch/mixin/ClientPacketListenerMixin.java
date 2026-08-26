@@ -1,7 +1,7 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
 import com.mojang.authlib.GameProfile;
-import fast.fastrecipesearch.RecipeManager;
+import io.github.nutant.fastrecipesearch.RecipeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientPacketListener;

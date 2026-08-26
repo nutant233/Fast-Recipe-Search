@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 
 import dev.shadowsoffire.fastsuite.FastSuite;

@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.gto.recipesearch.AbstractRecipeDB;
 import com.gto.recipesearch.IntLongMap;
@@ -21,12 +21,15 @@ import net.minecraft.world.level.Level;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
- class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeDB<RecipeHolder<C, T>> {
+class RecipeDB<C extends Container, T extends Recipe<C>> extends AbstractRecipeDB<RecipeHolder<C, T>> {
 
     private static final Comparator<RecipeHolder<?, ?>> COMPARATOR = Comparator.comparing(r -> r.id);
+    private static final ConcurrentHashMap<Class<?>, Boolean> recipeClassCache = new ConcurrentHashMap<>();
 
     private int maxInputAmount;
     private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
@@ -106,8 +109,54 @@ import java.util.stream.Collectors;
         return false;
     }
 
+    private static boolean isSafeRecipeClass(Class<?> clz, RecipeType<?> type) {
+        return recipeClassCache.computeIfAbsent(clz, c -> computeSafeRecipeClass(c, type));
+    }
+
+    private static boolean computeSafeRecipeClass(Class<?> clz, RecipeType<?> type) {
+        String name = clz.getName();
+        boolean allowed;
+        if (Config.recipeClassMode == Config.OptimizeMode.ALL) {
+            allowed = true;
+        } else {
+            if (isVanillaRecipeClass(name)) {
+                allowed = true;
+            } else {
+                allowed = switch (Config.recipeClassMode) {
+                    case BLACKLIST -> !matchesClass(Config.recipeClassBlacklist, name);
+                    case VANILLA -> false;
+                    case WHITELIST -> matchesClass(Config.recipeClassWhitelist, name);
+                    default -> throw new IllegalStateException("Unexpected value: " + Config.recipeClassMode);
+                };
+            }
+        }
+        var typeId = BuiltInRegistries.RECIPE_TYPE.getKey(type);
+        if (allowed) {
+            Config.LOGGER.info("Recipe class '{}' ({}) will be indexed (recipe_class_mode={})", name, typeId, Config.recipeClassMode.name().toLowerCase());
+        } else {
+            Config.LOGGER.info("Recipe class '{}' ({}) will not be indexed (recipe_class_mode={})", name, typeId, Config.recipeClassMode.name().toLowerCase());
+        }
+        return allowed;
+    }
+
+    private static boolean isVanillaRecipeClass(String name) {
+        return name.startsWith("net.minecraft.world.item.crafting.");
+    }
+
+    private static boolean matchesClass(Set<String> patterns, String className) {
+        for (String pattern : patterns) {
+            if (pattern.endsWith(".")) {
+                if (className.startsWith(pattern)) return true;
+            } else if (className.equals(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected IntLongMap extractIngredientMap(RecipeHolder<C, T> recipe) {
+        if (!isSafeRecipeClass(recipe.recipe.getClass(), recipe.recipe.getType())) return IntLongMap.EMPTY;
         var map = new IntLongMap();
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.recipe.getIngredients()) {

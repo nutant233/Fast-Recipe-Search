@@ -1,14 +1,12 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.crafting.PartialNBTIngredient;
 import net.minecraftforge.common.crafting.StrictNBTIngredient;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLLoader;
 
@@ -52,6 +50,5 @@ public class Fastrecipesearch {
             }
         });
         polymorph = FMLLoader.getLoadingModList().getModFileById("polymorph") != null;
-        DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> Client::new);
     }
 }
