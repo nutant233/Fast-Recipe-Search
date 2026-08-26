@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,11 +21,11 @@ public final class RecipeTypeFilter {
      * @return recipe types that take the fast path, or null when all types are optimized
      */
     public static Set<RecipeType<?>> optimizedTypes() {
-        return switch (Config.optimizeMode) {
+        return switch (Config.optimizeTypeMode) {
             case ALL -> null;
             case VANILLA -> Fastrecipesearch.VANILLA_TYPES;
-            case WHITELIST -> resolve(Config.optimizeWhitelist);
-            case BLACKLIST -> resolveComplement(Config.optimizeBlacklist);
+            case WHITELIST -> resolve(Config.optimizeTypeWhitelist);
+            case BLACKLIST -> resolveComplement(Config.optimizeTypeBlacklist);
         };
     }
 

@@ -1,7 +1,7 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
 import com.fast.recipesearch.IntMapContainer;
-import fast.fastrecipesearch.IRecipeHolder;
+import io.github.nutant.fastrecipesearch.IRecipeHolder;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import org.spongepowered.asm.mixin.Mixin;

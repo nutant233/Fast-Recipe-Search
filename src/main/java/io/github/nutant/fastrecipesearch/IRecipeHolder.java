@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.fast.recipesearch.IntMapContainer;
 import net.minecraft.world.item.crafting.Recipe;

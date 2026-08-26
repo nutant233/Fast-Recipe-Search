@@ -1,7 +1,7 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.IRecipeMap;
-import fast.fastrecipesearch.RecipeTypeFilter;
+import io.github.nutant.fastrecipesearch.IRecipeMap;
+import io.github.nutant.fastrecipesearch.RecipeTypeFilter;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
