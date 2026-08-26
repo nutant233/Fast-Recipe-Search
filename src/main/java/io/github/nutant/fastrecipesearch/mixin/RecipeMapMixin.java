@@ -27,22 +27,43 @@ public abstract class RecipeMapMixin implements IRecipeMap {
     public abstract <I extends RecipeInput, T extends Recipe<I>> Collection<RecipeHolder<T>> byType(RecipeType<T> type);
 
     @Unique
-    private final Map<RecipeType<?>, RecipeDB<?, ?>> fastRecipeSearch$cachedDBMap = new ConcurrentHashMap<>();
+    private Map<RecipeType<?>, RecipeDB<?, ?>> fastRecipeSearch$cachedDBMap;
 
     @Unique
-    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
+    private Set<RecipeType<?>> fastRecipeSearch$optimizedTypes;
+
+    @Unique
+    private Set<RecipeType<?>> fastRecipeSearch$getOptimizedTypes() {
+        var types = fastRecipeSearch$optimizedTypes;
+        if (types == null) {
+            types = fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
+        }
+        return types;
+    }
 
     @Inject(method = "getRecipesFor", at = @At("HEAD"), cancellable = true)
     public <I extends RecipeInput, T extends Recipe<I>> void getRecipesFor(RecipeType<T> type, I container, Level level, CallbackInfoReturnable<Stream<RecipeHolder<T>>> cir) {
         if (container.isEmpty()) {
             cir.setReturnValue(Stream.empty());
-        } else if (fastRecipeSearch$optimizedTypes == null || fastRecipeSearch$optimizedTypes.contains(type)) {
-            cir.setReturnValue(getDB(type).getAll(container, level));
+        } else {
+            var optimizedTypes = fastRecipeSearch$getOptimizedTypes();
+            if (optimizedTypes == null || optimizedTypes.contains(type)) {
+                cir.setReturnValue(getDB(type).getAll(container, level));
+            }
         }
     }
 
     @Override
     public <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> getDB(RecipeType<T> type) {
-        return (RecipeDB<C, T>) fastRecipeSearch$cachedDBMap.computeIfAbsent(type, _ -> RecipeDB.create(type, byType(type)));
+        var map = fastRecipeSearch$cachedDBMap;
+        if (map == null) {
+            synchronized (this) {
+                map = fastRecipeSearch$cachedDBMap;
+                if (map == null) {
+                    map = fastRecipeSearch$cachedDBMap = new ConcurrentHashMap<>();
+                }
+            }
+        }
+        return (RecipeDB<C, T>) map.computeIfAbsent(type, _ -> RecipeDB.create(type, byType(type)));
     }
 }

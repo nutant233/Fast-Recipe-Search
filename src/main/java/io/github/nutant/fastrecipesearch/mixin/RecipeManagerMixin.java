@@ -21,23 +21,35 @@ public class RecipeManagerMixin {
     private RecipeMap recipes;
 
     @Unique
-    private final Set<RecipeType<?>> fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
+    private Set<RecipeType<?>> fastRecipeSearch$optimizedTypes;
+
+    @Unique
+    private Set<RecipeType<?>> fastRecipeSearch$getOptimizedTypes() {
+        var types = fastRecipeSearch$optimizedTypes;
+        if (types == null) {
+            types = fastRecipeSearch$optimizedTypes = RecipeTypeFilter.optimizedTypes();
+        }
+        return types;
+    }
 
     @Inject(method = "getRecipeFor(Lnet/minecraft/world/item/crafting/RecipeType;Lnet/minecraft/world/item/crafting/RecipeInput;Lnet/minecraft/world/level/Level;)Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     public <I extends RecipeInput, T extends Recipe<I>> void getRecipeFor(RecipeType<T> type, I input, Level level, CallbackInfoReturnable<Optional<RecipeHolder<T>>> cir) {
         if (input.isEmpty()) {
             cir.setReturnValue(Optional.empty());
-        } else if (fastRecipeSearch$optimizedTypes == null || fastRecipeSearch$optimizedTypes.contains(type)) {
-            cir.setReturnValue(((IRecipeMap) recipes).getDB(type).get(input, level));
         } else {
-            var recipes = this.recipes.byType(type);
-            for (var recipe : recipes) {
-                if (recipe.value().matches(input, level)) {
-                    cir.setReturnValue(Optional.of(recipe));
-                    return;
+            var optimizedTypes = fastRecipeSearch$getOptimizedTypes();
+            if (optimizedTypes == null || optimizedTypes.contains(type)) {
+                cir.setReturnValue(((IRecipeMap) recipes).getDB(type).get(input, level));
+            } else {
+                var recipes = this.recipes.byType(type);
+                for (var recipe : recipes) {
+                    if (recipe.value().matches(input, level)) {
+                        cir.setReturnValue(Optional.of(recipe));
+                        return;
+                    }
                 }
+                cir.setReturnValue(Optional.empty());
             }
-            cir.setReturnValue(Optional.empty());
         }
     }
 }
