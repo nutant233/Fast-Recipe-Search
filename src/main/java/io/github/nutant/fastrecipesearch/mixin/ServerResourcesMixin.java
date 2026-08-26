@@ -1,7 +1,7 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.Fastrecipesearch;
-import fast.fastrecipesearch.RecipeManager;
+import io.github.nutant.fastrecipesearch.Fastrecipesearch;
+import io.github.nutant.fastrecipesearch.RecipeManager;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.ReloadableServerResources;

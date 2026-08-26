@@ -1,7 +1,7 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.google.gson.JsonElement;
-import fast.fastrecipesearch.compat.Polymorph;
+import io.github.nutant.fastrecipesearch.compat.Polymorph;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.Util;
 import net.minecraft.core.HolderLookup;
@@ -39,22 +39,42 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     private final Map<RecipeType<?>, RecipeDB<?, ?>> cachedDBMap = new ConcurrentHashMap<>();
 
-    /** Recipe types that take the fast path, or null when all types are optimized. */
+    /** Allow/deny set for the current mode, or null when every type is optimized. */
     @Nullable
-    private final Set<RecipeType<?>> optimizedTypes;
+    private Set<RecipeType<?>> typeFilter;
+    private boolean typeFilterAllow;
+    private final Set<RecipeType<?>> skippedTypes = ConcurrentHashMap.newKeySet();
 
     public RecipeManager(HolderLookup.Provider registries) {
         super(registries);
-        optimizedTypes = switch (Config.optimizeMode) {
-            case ALL -> null;
-            case VANILLA -> VANILLA_TYPES;
-            case WHITELIST -> resolve(Config.optimizeWhitelist);
-            case BLACKLIST -> resolveComplement(Config.optimizeBlacklist);
-        };
+        switch (Config.optimizeTypeMode) {
+            case ALL -> {
+                typeFilter = null;
+                typeFilterAllow = true;
+            }
+            case VANILLA -> {
+                typeFilter = VANILLA_TYPES;
+                typeFilterAllow = true;
+            }
+            case WHITELIST -> {
+                typeFilter = resolve(Config.optimizeTypeWhitelist);
+                typeFilterAllow = true;
+            }
+            case BLACKLIST -> {
+                typeFilter = resolve(Config.optimizeTypeBlacklist);
+                typeFilterAllow = false;
+            }
+        }
     }
 
     private boolean shouldOptimize(RecipeType<?> type) {
-        return optimizedTypes == null || optimizedTypes.contains(type);
+        if (typeFilter == null || typeFilterAllow == typeFilter.contains(type)) {
+            return true;
+        }
+        if (skippedTypes.add(type)) {
+            Config.LOGGER.info("Recipe type '{}' will not be optimized (optimize_type_mode={})", BuiltInRegistries.RECIPE_TYPE.getKey(type), Config.optimizeTypeMode.name().toLowerCase());
+        }
+        return false;
     }
 
     private static Set<RecipeType<?>> resolve(Set<String> ids) {
@@ -70,19 +90,6 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
                 }
             } else {
                 Config.LOGGER.warn("Invalid recipe type id '{}' in config, ignoring", id);
-            }
-        }
-        return set;
-    }
-
-    /** Blacklist mode: optimize every registered recipe type except the listed ones. */
-    private static Set<RecipeType<?>> resolveComplement(Set<String> blacklist) {
-        var excluded = resolve(blacklist);
-        var set = new ReferenceOpenHashSet<RecipeType<?>>();
-        for (var key : BuiltInRegistries.RECIPE_TYPE.keySet()) {
-            var type = BuiltInRegistries.RECIPE_TYPE.get(key);
-            if (type != null && !excluded.contains(type)) {
-                set.add(type);
             }
         }
         return set;
@@ -125,6 +132,9 @@ public class RecipeManager extends net.minecraft.world.item.crafting.RecipeManag
 
     @SuppressWarnings("unchecked")
     private <C extends RecipeInput, T extends Recipe<C>> RecipeDB<C, T> getDB(RecipeType<T> type) {
-        return (RecipeDB<C, T>) cachedDBMap.computeIfAbsent(type, k -> RecipeDB.create(type, byType(type)));
+        return (RecipeDB<C, T>) cachedDBMap.computeIfAbsent(type, k -> {
+            Config.LOGGER.info("Recipe type '{}' will be optimized (optimize_type_mode={})", BuiltInRegistries.RECIPE_TYPE.getKey(k), Config.optimizeTypeMode.name().toLowerCase());
+            return RecipeDB.create(type, byType(type));
+        });
     }
 }

@@ -1,4 +1,4 @@
-package fast.fastrecipesearch.compat;
+package io.github.nutant.fastrecipesearch.compat;
 
 import com.illusivesoulworks.polymorph.api.PolymorphApi;
 import com.illusivesoulworks.polymorph.api.common.base.IRecipeContext;

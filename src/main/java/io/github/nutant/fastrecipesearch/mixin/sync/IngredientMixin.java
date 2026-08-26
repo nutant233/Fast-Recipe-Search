@@ -1,4 +1,4 @@
-package fast.fastrecipesearch.mixin.sync;
+package io.github.nutant.fastrecipesearch.mixin.sync;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;

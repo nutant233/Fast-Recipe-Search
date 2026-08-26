@@ -1,7 +1,7 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.Fastrecipesearch;
-import fast.fastrecipesearch.RecipeManager;
+import io.github.nutant.fastrecipesearch.Fastrecipesearch;
+import io.github.nutant.fastrecipesearch.RecipeManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.CommonListenerCookie;
