@@ -34,6 +34,7 @@ repositories {
 
 dependencies {
     include(implementation("dev:RecipeSearch:1.1"))
+    implementation "com.electronwill.night-config:toml:3.6.4"
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"

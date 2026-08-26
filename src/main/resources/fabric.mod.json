@@ -10,7 +10,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "fast.fastrecipesearch.Fastrecipesearch"
+      "io.github.nutant.fastrecipesearch.Fastrecipesearch"
     ]
   },
   "mixins": [

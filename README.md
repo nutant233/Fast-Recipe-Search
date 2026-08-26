@@ -16,29 +16,59 @@ FastFurnace, FastWorkbench, Client Crafting are compatible.
 ## Configuration
 Because some mods implement recipe-related interfaces in a non-standard way — for example, they implement the getIngredients method of the Recipe interface, so ingredients can be extracted and thus are optimized by this mod, but the corresponding Container interface does not implement the getItem method, making it impossible to search for that mod's recipes.
 
-To address this issue, the optimization scope is configurable. The config file is `config/fast_recipe_search.properties`:
+To address this issue, this mod by default only optimizes vanilla recipe types (crafting table, furnace, etc.). The config file is `config/fast_recipe_search.toml`. An existing `fast_recipe_search.properties` is migrated automatically.
 
-- `optimize_mode`: Controls which recipe types are optimized.
-  - `all`: Optimize all recipe types (default)
-  - `vanilla`: Only optimize vanilla recipe types (crafting table, furnace, etc.)
-  - `whitelist`: Only optimize the recipe types listed in `optimize_whitelist`
-  - `blacklist`: Optimize all recipe types except those listed in `optimize_blacklist`
-- `optimize_whitelist`: Comma-separated recipe type ids (e.g. `minecraft:crafting,minecraft:smelting,some_mod:custom_type`)
-- `optimize_blacklist`: Comma-separated recipe type ids
+- `optimize_type.mode`: Controls which recipe types are optimized.
+  - `vanilla`: Only optimize vanilla recipe types (default)
+  - `all`: Optimize all recipe types
+  - `whitelist`: Only optimize the recipe types listed in `optimize_type.whitelist`
+  - `blacklist`: Optimize all recipe types except those listed in `optimize_type.blacklist`
+- `optimize_type.whitelist`: Recipe type ids (e.g. `"minecraft:crafting"`)
+- `optimize_type.blacklist`: Recipe type ids
 
 Vanilla recipe type ids for reference: `minecraft:crafting`, `minecraft:smelting`, `minecraft:blasting`, `minecraft:smoking`, `minecraft:campfire_cooking`, `minecraft:stonecutting`, `minecraft:smithing`.
 
+Even within an optimized recipe type, individual recipe *classes* are filtered the same way FastSuite does: only vanilla classes (`net.minecraft.recipe.*`) are indexed by default. Vanilla recipe classes are never filtered unless you put them on the blacklist. Custom recipe classes still match via a linear fallback so they keep working, they just are not put in the tree.
+
+- `recipe_class.mode`: Controls which recipe classes are indexed.
+  - `vanilla`: Only index vanilla recipe classes (default)
+  - `all`: Index all recipe classes
+  - `whitelist`: Index vanilla classes plus those listed in `recipe_class.whitelist`
+  - `blacklist`: Index all recipe classes except those listed in `recipe_class.blacklist`
+- `recipe_class.whitelist`: Class names, or package prefixes ending with `.`
+- `recipe_class.blacklist`: Class names, or package prefixes ending with `.`
+
+Example — index vanilla classes plus one mod recipe:
+```toml
+[recipe_class]
+mode = "whitelist"
+whitelist = ["vectorwing.farmersdelight.common.crafting.CookingPotRecipe"]
+```
+
+Example — index everything except one broken class:
+```toml
+[recipe_class]
+mode = "blacklist"
+blacklist = ["com.example.BrokenRecipe"]
+```
+
+Each recipe class is logged once with its recipe type, e.g. `Recipe class '...' (minecraft:crafting) will be indexed` or `will not be indexed`.
+
 Example — only optimize crafting and smelting:
-```properties
-optimize_mode=whitelist
-optimize_whitelist=minecraft:crafting,minecraft:smelting
+```toml
+[optimize_type]
+mode = "whitelist"
+whitelist = ["minecraft:crafting", "minecraft:smelting"]
 ```
 
 Example — optimize everything except a problematic mod type:
-```properties
-optimize_mode=blacklist
-optimize_blacklist=some_mod:custom_type
+```toml
+[optimize_type]
+mode = "blacklist"
+blacklist = ["some_mod:custom_type"]
 ```
+
+To find a mod's recipe type id, temporarily set `optimize_type.mode = "all"` and restart the game, then trigger a search of that recipe type (for example, open the crafting table or the machine's GUI). The first search builds the index for that type and logs a "Constructed recipe list for <id>" line.
 
 Changes to the config file take effect after restarting the game.
 

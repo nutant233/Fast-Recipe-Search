@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.fast.recipesearch.IntContainerHolder;
 import net.minecraft.recipe.Recipe;

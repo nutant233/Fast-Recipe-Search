@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import com.fast.recipesearch.AbstractContainerRecipeDB;
 import com.fast.recipesearch.IntLongMap;
@@ -21,9 +21,12 @@ import net.minecraft.registry.tag.TagKey;
 import net.minecraft.world.World;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ObjIntConsumer;
 
 class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractContainerRecipeDB<IRecipeHolder<T>> {
+
+    private static final ConcurrentHashMap<Class<?>, Boolean> recipeClassCache = new ConcurrentHashMap<>();
 
     private int maxInputAmount;
     private Reference2ReferenceMap<Item, IntSet> rawHash = new Reference2ReferenceOpenHashMap<>();
@@ -112,9 +115,55 @@ class RecipeDB<C extends RecipeInput, T extends Recipe<C>> extends AbstractConta
         return false;
     }
 
+    private static boolean isSafeRecipeClass(Class<?> clz, RecipeType<?> type) {
+        return recipeClassCache.computeIfAbsent(clz, c -> computeSafeRecipeClass(c, type));
+    }
+
+    private static boolean computeSafeRecipeClass(Class<?> clz, RecipeType<?> type) {
+        String name = clz.getName();
+        boolean allowed;
+        if (Config.recipeClassMode == Config.OptimizeMode.ALL) {
+            allowed = true;
+        } else {
+            if (isVanillaRecipeClass(name)) {
+                allowed = true;
+            } else {
+                allowed = switch (Config.recipeClassMode) {
+                    case BLACKLIST -> !matchesClass(Config.recipeClassBlacklist, name);
+                    case VANILLA -> false;
+                    case WHITELIST -> matchesClass(Config.recipeClassWhitelist, name);
+                    default -> throw new IllegalStateException("Unexpected value: " + Config.recipeClassMode);
+                };
+            }
+        }
+        var typeId = Registries.RECIPE_TYPE.getKey(type);
+        if (allowed) {
+            Config.LOGGER.info("Recipe class '{}' ({}) will be indexed (recipe_class_mode={})", name, typeId, Config.recipeClassMode.name().toLowerCase());
+        } else {
+            Config.LOGGER.info("Recipe class '{}' ({}) will not be indexed (recipe_class_mode={})", name, typeId, Config.recipeClassMode.name().toLowerCase());
+        }
+        return allowed;
+    }
+
+    private static boolean isVanillaRecipeClass(String name) {
+        return name.startsWith("net.minecraft.recipe.");
+    }
+
+    private static boolean matchesClass(Set<String> patterns, String className) {
+        for (String pattern : patterns) {
+            if (pattern.endsWith(".")) {
+                if (className.startsWith(pattern)) return true;
+            } else if (className.equals(pattern)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected IntLongMap extractIntMap(IRecipeHolder<T> recipe) {
         var map = new IntLongMap();
+        if (!isSafeRecipeClass(recipe.self().value().getClass(), recipe.self().value().getType())) return map;
         int inputAmount = 0;
         for (Ingredient ingredient : recipe.self().value().getIngredients()) {
             if (ingredient.getClass() == Ingredient.class) {

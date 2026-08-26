@@ -1,4 +1,4 @@
-package fast.fastrecipesearch;
+package io.github.nutant.fastrecipesearch;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.fabricmc.api.ModInitializer;

@@ -1,6 +1,6 @@
-package fast.fastrecipesearch.mixin;
+package io.github.nutant.fastrecipesearch.mixin;
 
-import fast.fastrecipesearch.RecipeManager;
+import io.github.nutant.fastrecipesearch.RecipeManager;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.server.DataPackContents;
